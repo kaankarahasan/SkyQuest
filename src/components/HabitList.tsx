@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import React from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
 
@@ -78,7 +78,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
     );
 
     const renderWeeklyView = () => (
-        <View style={styles.placeholderContainer}>
+        <ScrollView style={styles.container} contentContainerStyle={styles.listContent}>
             {filteredHabits.length === 0 ? renderEmptyState() : filteredHabits.map(habit => (
                 <View key={habit.id} style={styles.weeklyCard}>
                     <View style={styles.habitHeader}>
@@ -100,7 +100,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                     </View>
                 </View>
             ))}
-        </View>
+        </ScrollView>
     );
 
     const renderMonthlyView = () => {
@@ -112,7 +112,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
         return (
-            <View style={styles.placeholderContainer}>
+            <ScrollView style={styles.container} contentContainerStyle={styles.listContent}>
                 {filteredHabits.length === 0 ? renderEmptyState() : filteredHabits.map(habit => (
                     <View key={habit.id} style={styles.weeklyCard}>
                         <View style={styles.habitHeader}>
@@ -136,7 +136,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                         </View>
                     </View>
                 ))}
-            </View>
+            </ScrollView>
         );
     };
 
@@ -146,7 +146,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
         const monthNamesShort = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
 
         return (
-            <View style={styles.placeholderContainer}>
+            <ScrollView style={styles.container} contentContainerStyle={styles.listContent}>
                 {filteredHabits.length === 0 ? renderEmptyState() : filteredHabits.map(habit => (
                     <View key={habit.id} style={styles.weeklyCard}>
                         <View style={styles.habitHeader}>
@@ -175,7 +175,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                         </View>
                     </View>
                 ))}
-            </View>
+            </ScrollView>
         );
     };
 

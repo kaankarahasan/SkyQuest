@@ -1,49 +1,85 @@
-import React from 'react';
-import { View, Text, StyleSheet, ImageBackground, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { COLORS } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import { Image, ImageBackground, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { COLORS } from '../constants/colors';
 
 interface AuthLayoutProps {
     children: React.ReactNode;
     title?: string;
     showBack?: boolean;
     onBack?: () => void;
+    logoSource?: any;
+    backgroundImage?: any;
 }
 
-export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, showBack, onBack }) => {
+export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, showBack, onBack, logoSource, backgroundImage }) => {
+    const logo = logoSource || require('../../assets/images/fly1.png');
+
     return (
         <View style={styles.container}>
-            {/* Placeholder for Background Image - In real app use ImageBackground with actual asset */}
-            <View style={styles.backgroundImage} />
+            {backgroundImage ? (
+                <ImageBackground source={backgroundImage} style={styles.backgroundImage} resizeMode="cover">
+                    <View style={styles.overlay} />
+                    <SafeAreaView style={styles.safeArea}>
+                        <KeyboardAvoidingView
+                            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                            style={styles.keyboardView}
+                        >
+                            <ScrollView contentContainerStyle={styles.scrollContent}>
+                                <View style={styles.header}>
+                                    <Text style={styles.appTitle}>SKYQUEST</Text>
+                                    <Image source={logo} style={styles.logo} resizeMode="contain" />
+                                </View>
 
-            <SafeAreaView style={styles.safeArea}>
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    style={styles.keyboardView}
-                >
-                    <ScrollView contentContainerStyle={styles.scrollContent}>
-                        <View style={styles.header}>
-                            <Text style={styles.appTitle}>SKYQUEST</Text>
-                            {/* Dragon Icon Placeholder */}
-                            <Ionicons name="logo-octocat" size={80} color="black" style={styles.logo} />
-                        </View>
+                                <View style={styles.card}>
+                                    {showBack && (
+                                        <Ionicons
+                                            name="chevron-back"
+                                            size={24}
+                                            color={COLORS.white}
+                                            onPress={onBack}
+                                            style={styles.backIcon}
+                                        />
+                                    )}
+                                    {title && <Text style={styles.screenTitle}>{title}</Text>}
+                                    {children}
+                                </View>
+                            </ScrollView>
+                        </KeyboardAvoidingView>
+                    </SafeAreaView>
+                </ImageBackground>
+            ) : (
+                <>
+                    <View style={styles.defaultBackground} />
+                    <SafeAreaView style={styles.safeArea}>
+                        <KeyboardAvoidingView
+                            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                            style={styles.keyboardView}
+                        >
+                            <ScrollView contentContainerStyle={styles.scrollContent}>
+                                <View style={styles.header}>
+                                    <Text style={styles.appTitle}>SKYQUEST</Text>
+                                    <Image source={logo} style={styles.logo} resizeMode="contain" />
+                                </View>
 
-                        <View style={styles.card}>
-                            {showBack && (
-                                <Ionicons
-                                    name="chevron-back"
-                                    size={24}
-                                    color={COLORS.white}
-                                    onPress={onBack}
-                                    style={styles.backIcon}
-                                />
-                            )}
-                            {title && <Text style={styles.screenTitle}>{title}</Text>}
-                            {children}
-                        </View>
-                    </ScrollView>
-                </KeyboardAvoidingView>
-            </SafeAreaView>
+                                <View style={styles.card}>
+                                    {showBack && (
+                                        <Ionicons
+                                            name="chevron-back"
+                                            size={24}
+                                            color={COLORS.white}
+                                            onPress={onBack}
+                                            style={styles.backIcon}
+                                        />
+                                    )}
+                                    {title && <Text style={styles.screenTitle}>{title}</Text>}
+                                    {children}
+                                </View>
+                            </ScrollView>
+                        </KeyboardAvoidingView>
+                    </SafeAreaView>
+                </>
+            )}
         </View>
     );
 };
@@ -54,9 +90,18 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.background,
     },
     backgroundImage: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+    },
+    defaultBackground: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: '#2C3E50', // Fallback color
+        backgroundColor: '#2C3E50',
         opacity: 0.5,
+    },
+    overlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.3)', // Slight dark overlay for readability
     },
     safeArea: {
         flex: 1,
@@ -81,6 +126,8 @@ const styles = StyleSheet.create({
         letterSpacing: 2,
     },
     logo: {
+        width: 80,
+        height: 80,
         marginBottom: 20,
     },
     card: {

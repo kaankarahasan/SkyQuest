@@ -17,7 +17,13 @@ export const ForgotPasswordScreen = ({ navigation }: any) => {
     };
 
     return (
-        <AuthLayout title="Şifreni mi Unuttun?" showBack onBack={() => navigation.goBack()}>
+        <AuthLayout
+            title="Şifreni mi Unuttun?"
+            showBack
+            onBack={() => navigation.goBack()}
+            backgroundImage={require('../../assets/images/loginbackground.png')}
+            logoSource={require('../../assets/images/fly.png')}
+        >
             <CustomInput
                 placeholder="E-posta"
                 value={email}

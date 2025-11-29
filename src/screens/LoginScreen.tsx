@@ -59,7 +59,11 @@ export const LoginScreen = ({ navigation }: any) => {
     };
 
     return (
-        <AuthLayout title="Giriş Yap">
+        <AuthLayout
+            title="Giriş Yap"
+            logoSource={require('../../assets/images/fly.png')}
+            backgroundImage={require('../../assets/images/loginbackground.png')}
+        >
             <CustomInput
                 placeholder="E-posta"
                 value={email}

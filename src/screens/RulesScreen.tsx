@@ -6,7 +6,7 @@ import { COLORS } from '../constants/colors';
 export const RulesScreen = ({ navigation }: any) => {
     return (
         <ImageBackground
-            source={{ uri: 'https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?q=80&w=2574&auto=format&fit=crop' }} // Fantasy tavern/table background
+            source={require('../../assets/images/rulesback.png')}
             style={styles.backgroundImage}
         >
             <SafeAreaView style={styles.container}>

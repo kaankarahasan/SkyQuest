@@ -50,7 +50,13 @@ export const RegisterScreen = ({ navigation }: any) => {
     };
 
     return (
-        <AuthLayout title="Kayıt Ol" showBack onBack={() => navigation.goBack()}>
+        <AuthLayout
+            title="Kayıt Ol"
+            showBack
+            onBack={() => navigation.goBack()}
+            backgroundImage={require('../../assets/images/loginbackground.png')}
+            logoSource={require('../../assets/images/fly.png')}
+        >
             <CustomInput
                 placeholder="Ad Soyad"
                 value={fullName}

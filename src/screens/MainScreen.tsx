@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { AddHabitModal } from '../components/AddHabitModal';
 import { HabitList } from '../components/HabitList';
 import { TabSwitcher } from '../components/TabSwitcher';
@@ -19,7 +19,7 @@ export const MainScreen = ({ navigation }: any) => {
                 </TouchableOpacity>
                 <View style={styles.logoContainer}>
                     <Text style={styles.logoText}>SKYQUEST</Text>
-                    <Ionicons name="rocket" size={24} color={COLORS.text} />
+                    <Image source={require('../../assets/images/fly1.png')} style={{ width: 24, height: 24 }} resizeMode="contain" />
                 </View>
                 <TouchableOpacity onPress={() => setModalVisible(true)}>
                     <Ionicons name="add-circle" size={32} color={COLORS.text} />
