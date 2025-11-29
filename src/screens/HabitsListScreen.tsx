@@ -1,0 +1,131 @@
+import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { AddHabitModal } from '../components/AddHabitModal'; // We will reuse/refactor this
+import { COLORS } from '../constants/colors';
+
+// Mock Data
+const HABITS = [
+    {
+        id: '1',
+        title: '2 Litre Su İç',
+        streak: 6,
+        icon: 'water-outline',
+        color: '#4FC3F7',
+        description: 'Sağlığım için her gün 2 litre su içmeliyim.',
+        category: 'Su',
+    },
+    {
+        id: '2',
+        title: 'Her Gün 10.000 Adım Yürü',
+        streak: 21,
+        icon: 'walk-outline',
+        color: '#FFD54F',
+        description: 'Formda kalmak için yürü.',
+        category: 'Spor',
+    },
+];
+
+export const HabitsListScreen = ({ navigation }: any) => {
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedHabit, setSelectedHabit] = useState<any>(null);
+
+    const handleEdit = (habit: any) => {
+        setSelectedHabit(habit);
+        setModalVisible(true);
+    };
+
+    const handleCloseModal = () => {
+        setModalVisible(false);
+        setSelectedHabit(null);
+    };
+
+    const renderItem = ({ item }: { item: any }) => (
+        <TouchableOpacity
+            style={styles.card}
+            onPress={() => navigation.navigate('HabitDetail', { habit: item })}
+        >
+            <View style={styles.iconContainer}>
+                <Ionicons name={item.icon} size={24} color={item.color} />
+            </View>
+            <View style={styles.infoContainer}>
+                <Text style={styles.title}>{item.title}</Text>
+                <Text style={styles.streak}>🔥 {item.streak} Gün</Text>
+            </View>
+            <TouchableOpacity onPress={() => handleEdit(item)}>
+                <Ionicons name="create-outline" size={32} color={COLORS.text} />
+            </TouchableOpacity>
+        </TouchableOpacity>
+    );
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Ionicons name="chevron-back" size={28} color={COLORS.text} />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>ALIŞKANLIKLAR LİSTESİ</Text>
+                <View style={{ width: 28 }} />
+            </View>
+
+            <FlatList
+                data={HABITS}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.listContent}
+            />
+
+            <AddHabitModal
+                visible={modalVisible}
+                onClose={handleCloseModal}
+                initialData={selectedHabit} // We need to update AddHabitModal to accept this
+            />
+        </SafeAreaView>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: COLORS.background,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+    },
+    headerTitle: {
+        color: COLORS.text,
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    listContent: {
+        padding: 16,
+    },
+    card: {
+        flexDirection: 'row',
+        backgroundColor: COLORS.cardBackground,
+        padding: 16,
+        borderRadius: 12,
+        marginBottom: 12,
+        alignItems: 'center',
+    },
+    iconContainer: {
+        marginRight: 16,
+    },
+    infoContainer: {
+        flex: 1,
+    },
+    title: {
+        color: COLORS.text,
+        fontSize: 16,
+        fontWeight: '600',
+        marginBottom: 4,
+    },
+    streak: {
+        color: COLORS.textSecondary,
+        fontSize: 12,
+    },
+});

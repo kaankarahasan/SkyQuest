@@ -1,0 +1,67 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# --------------------------------------------------------------------------------
+# 1. DEPENDENCIES, MODULES & BUILD ARTIFACTS
+# --------------------------------------------------------------------------------
+
+# Node / NPM / Yarn
+/node_modules
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Expo / Build
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+*.tsbuildinfo
+
+# Generated Native Folders (Eğer EAS Build veya "eject" yapıldıysa)
+/ios
+/android
+
+# --------------------------------------------------------------------------------
+# 2. LOCAL & SENSITIVE FILES
+# --------------------------------------------------------------------------------
+
+# Hassas Bilgiler / Ortam Değişkenleri
+.env
+.env.*
+.env*.local
+
+# Native Keys & Credentials
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
+*.orig.*
+
+# --------------------------------------------------------------------------------
+# 3. OS SPECIFIC FILES & IDE
+# --------------------------------------------------------------------------------
+
+# macOS
+.DS_Store
+# 'Operation not permitted' hatasını çözer ve hassas sistem dosyalarını hariç tutar
+Pictures/
+Photos Library.photoslibrary/
+
+# Windows
+Thumbs.db
+
+# IDE (Integrated Development Environment) / Tooling
+.vscode/
+.idea/
+*.iml
+.kotlin/
+.metro-health-check*
+
+# --------------------------------------------------------------------------------
+# 4. EXAMPLES & DUMMY
+# --------------------------------------------------------------------------------
+
+# Örnek dosyalar veya gereksiz görülenler
+app-example
