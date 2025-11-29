@@ -37,8 +37,8 @@ export const LoginScreen = ({ navigation }: any) => {
             const user = userCredential.user;
             Alert.alert('Giriş Başarılı', `Hoş geldiniz, ${user.email}`);
 
-            // Başarılı girişten sonra kullanıcıyı ana ekrana yönlendir (Örn: Home)
-            // navigation.navigate('Home'); 
+            // Başarılı girişten sonra kullanıcıyı ana ekrana yönlendir
+            navigation.navigate('MainDrawer');
 
         } catch (error: any) {
             let errorMessage = 'Giriş işlemi sırasında bir hata oluştu.';
@@ -72,6 +72,7 @@ export const LoginScreen = ({ navigation }: any) => {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
+                autoCapitalize="none"
             />
 
             <View style={styles.optionsRow}>

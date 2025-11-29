@@ -1,20 +1,52 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { AuthLayout } from '../components/AuthLayout';
-import { CustomInput } from '../components/CustomInput';
-import { CustomButton } from '../components/CustomButton';
-import { COLORS } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import React, { useState } from 'react';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { auth } from '../../firebaseConfig';
+import { AuthLayout } from '../components/AuthLayout';
+import { CustomButton } from '../components/CustomButton';
+import { CustomInput } from '../components/CustomInput';
+import { COLORS } from '../constants/colors';
 
 export const RegisterScreen = ({ navigation }: any) => {
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleRegister = () => {
-        // TODO: Implement Firebase Register
-        console.log('Register pressed', { fullName, email, password });
+    const handleRegister = async () => {
+        if (!fullName || !email || !password) {
+            Alert.alert('Hata', 'Lütfen tüm alanları doldurunuz.');
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            await updateProfile(user, {
+                displayName: fullName,
+            });
+
+            Alert.alert('Başarılı', 'Hesabınız oluşturuldu. Lütfen giriş yapınız.', [
+                { text: 'Tamam', onPress: () => navigation.navigate('Login') }
+            ]);
+        } catch (error: any) {
+            let errorMessage = 'Kayıt işlemi sırasında bir hata oluştu.';
+            if (error.code === 'auth/email-already-in-use') {
+                errorMessage = 'Bu e-posta adresi zaten kullanımda.';
+            } else if (error.code === 'auth/invalid-email') {
+                errorMessage = 'Geçersiz e-posta adresi.';
+            } else if (error.code === 'auth/weak-password') {
+                errorMessage = 'Şifre çok zayıf. En az 6 karakter olmalı.';
+            }
+            Alert.alert('Kayıt Hatası', errorMessage);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -23,17 +55,20 @@ export const RegisterScreen = ({ navigation }: any) => {
                 placeholder="Ad Soyad"
                 value={fullName}
                 onChangeText={setFullName}
+                autoCapitalize="none"
             />
             <CustomInput
                 placeholder="E-posta"
                 value={email}
                 onChangeText={setEmail}
+                autoCapitalize="none"
             />
             <CustomInput
                 placeholder="Şifre"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
+                autoCapitalize="none"
             />
 
             <View style={styles.optionsRow}>
@@ -50,7 +85,12 @@ export const RegisterScreen = ({ navigation }: any) => {
                 </TouchableOpacity>
             </View>
 
-            <CustomButton title="Kayıt Ol" onPress={handleRegister} variant="secondary" />
+            <CustomButton
+                title={isLoading ? "Kaydediliyor..." : "Kayıt Ol"}
+                onPress={handleRegister}
+                variant="secondary"
+                disabled={isLoading}
+            />
         </AuthLayout>
     );
 };

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AuthLayout } from '../components/AuthLayout';
-import { CustomInput } from '../components/CustomInput';
 import { CustomButton } from '../components/CustomButton';
+import { CustomInput } from '../components/CustomInput';
 
 export const ResetPasswordScreen = ({ navigation }: any) => {
     const [newPassword, setNewPassword] = useState('');
@@ -20,12 +20,14 @@ export const ResetPasswordScreen = ({ navigation }: any) => {
                 value={newPassword}
                 onChangeText={setNewPassword}
                 secureTextEntry
+                autoCapitalize="none"
             />
             <CustomInput
                 placeholder="Yeni Şifreni Doğrula"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry
+                autoCapitalize="none"
             />
 
             <CustomButton title="Şifreni Sıfırla" onPress={handleReset} />

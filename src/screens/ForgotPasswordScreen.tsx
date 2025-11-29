@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Modal } from 'react-native';
-import { AuthLayout } from '../components/AuthLayout';
-import { CustomInput } from '../components/CustomInput';
-import { CustomButton } from '../components/CustomButton';
-import { COLORS } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { Modal, StyleSheet, Text, View } from 'react-native';
+import { AuthLayout } from '../components/AuthLayout';
+import { CustomButton } from '../components/CustomButton';
+import { CustomInput } from '../components/CustomInput';
+import { COLORS } from '../constants/colors';
 
 export const ForgotPasswordScreen = ({ navigation }: any) => {
     const [email, setEmail] = useState('');
@@ -22,6 +22,7 @@ export const ForgotPasswordScreen = ({ navigation }: any) => {
                 placeholder="E-posta"
                 value={email}
                 onChangeText={setEmail}
+                autoCapitalize="none"
             />
 
             <CustomButton title="Gönder" onPress={handleSend} variant="secondary" />
