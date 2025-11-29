@@ -17,20 +17,25 @@ export const HabitsListScreen = ({ navigation }: any) => {
     const [loading, setLoading] = useState(true);
 
     React.useEffect(() => {
-        const user = auth.currentUser;
-        if (!user) return;
-
-        const q = query(collection(db, 'habits'), where('userId', '==', user.uid));
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            const habitsData: any[] = [];
-            querySnapshot.forEach((doc) => {
-                habitsData.push({ id: doc.id, ...doc.data() });
-            });
-            setHabits(habitsData);
-            setLoading(false);
+        const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+            if (user) {
+                const q = query(collection(db, 'habits'), where('userId', '==', user.uid));
+                const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
+                    const habitsData: any[] = [];
+                    querySnapshot.forEach((doc) => {
+                        habitsData.push({ id: doc.id, ...doc.data() });
+                    });
+                    setHabits(habitsData);
+                    setLoading(false);
+                });
+                return () => unsubscribeSnapshot();
+            } else {
+                setHabits([]);
+                setLoading(false);
+            }
         });
 
-        return () => unsubscribe();
+        return () => unsubscribeAuth();
     }, []);
 
     const handleEdit = (habit: any) => {
@@ -49,7 +54,7 @@ export const HabitsListScreen = ({ navigation }: any) => {
             onPress={() => navigation.navigate('HabitDetail', { habit: item })}
         >
             <View style={styles.iconContainer}>
-                <Ionicons name={item.icon} size={24} color={item.color} />
+                <Text style={{ fontSize: 24 }}>{item.icon}</Text>
             </View>
             <View style={styles.infoContainer}>
                 <Text style={styles.title}>{item.title}</Text>

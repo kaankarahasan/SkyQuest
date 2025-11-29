@@ -24,7 +24,7 @@ export const AddHabitModal = ({ visible, onClose, initialData }: AddHabitModalPr
     const [selectedEmoji, setSelectedEmoji] = useState('🤩');
     const [emojiPickerVisible, setEmojiPickerVisible] = useState(false);
 
-    const isFormValid = habitName.trim().length > 0 && category.trim().length > 0 && selectedColor !== null;
+    const isFormValid = habitName.trim().length > 0 && category.trim().length > 0 && selectedDays.length > 0;
 
     const toggleDay = (index: number) => {
         if (selectedDays.includes(index)) {

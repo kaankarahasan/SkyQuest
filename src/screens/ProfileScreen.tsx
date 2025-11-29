@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import React, { useState } from 'react';
 import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { auth } from '../../firebaseConfig';
+import { auth, db } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
 
 export const ProfileScreen = ({ navigation }: any) => {
@@ -9,6 +10,22 @@ export const ProfileScreen = ({ navigation }: any) => {
     const [name, setName] = useState(user?.displayName || '');
     const [email, setEmail] = useState(user?.email || '');
     const [password, setPassword] = useState(''); // Password cannot be retrieved, only reset
+    const [habits, setHabits] = useState<any[]>([]);
+
+    React.useEffect(() => {
+        if (!user) return;
+
+        const q = query(collection(db, 'habits'), where('userId', '==', user.uid));
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const habitsData: any[] = [];
+            querySnapshot.forEach((doc) => {
+                habitsData.push({ id: doc.id, ...doc.data() });
+            });
+            setHabits(habitsData);
+        });
+
+        return () => unsubscribe();
+    }, [user]);
 
     return (
         <SafeAreaView style={styles.container}>
@@ -74,6 +91,23 @@ export const ProfileScreen = ({ navigation }: any) => {
                         </Text>
                     </View>
                 </View>
+
+                <Text style={styles.sectionTitle}>ALIŞKANLIKLARIM ({habits.length})</Text>
+                {habits.length > 0 ? (
+                    habits.map((habit) => (
+                        <View key={habit.id} style={styles.habitItem}>
+                            <View style={styles.habitIconContainer}>
+                                <Text style={{ fontSize: 20 }}>{habit.icon}</Text>
+                            </View>
+                            <View style={styles.habitInfo}>
+                                <Text style={styles.habitTitle}>{habit.title}</Text>
+                                <Text style={styles.habitStreak}>🔥 {habit.streak} Gün</Text>
+                            </View>
+                        </View>
+                    ))
+                ) : (
+                    <Text style={styles.noHabitsText}>Henüz hiç alışkanlık eklemedin.</Text>
+                )}
 
                 <TouchableOpacity style={styles.saveButton}>
                     <Text style={styles.saveButtonText}>Kaydet</Text>
@@ -146,6 +180,7 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
         marginBottom: 16,
+        marginTop: 10,
     },
     badgeCard: {
         backgroundColor: '#333',
@@ -177,10 +212,45 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         borderRadius: 12,
         alignItems: 'center',
+        marginTop: 20,
     },
     saveButtonText: {
         color: COLORS.text,
         fontSize: 18,
         fontWeight: 'bold',
+    },
+    habitItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#333',
+        padding: 12,
+        borderRadius: 12,
+        marginBottom: 10,
+    },
+    habitIconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#444',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    habitInfo: {
+        flex: 1,
+    },
+    habitTitle: {
+        color: COLORS.text,
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    habitStreak: {
+        color: COLORS.textSecondary,
+        fontSize: 14,
+    },
+    noHabitsText: {
+        color: COLORS.textSecondary,
+        fontStyle: 'italic',
+        marginBottom: 20,
     },
 });

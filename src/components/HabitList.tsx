@@ -18,25 +18,30 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
     const [loading, setLoading] = React.useState(true);
 
     React.useEffect(() => {
-        const user = auth.currentUser;
-        if (!user) return;
-
-        const q = query(collection(db, 'habits'), where('userId', '==', user.uid));
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            const habitsData: any[] = [];
-            querySnapshot.forEach((doc) => {
-                habitsData.push({ id: doc.id, ...doc.data() });
-            });
-            setHabits(habitsData);
-            setLoading(false);
+        const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+            if (user) {
+                const q = query(collection(db, 'habits'), where('userId', '==', user.uid));
+                const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
+                    const habitsData: any[] = [];
+                    querySnapshot.forEach((doc) => {
+                        habitsData.push({ id: doc.id, ...doc.data() });
+                    });
+                    setHabits(habitsData);
+                    setLoading(false);
+                });
+                return () => unsubscribeSnapshot();
+            } else {
+                setHabits([]);
+                setLoading(false);
+            }
         });
 
-        return () => unsubscribe();
+        return () => unsubscribeAuth();
     }, []);
     const renderItem = ({ item }: { item: any }) => (
         <View style={[styles.card, { borderColor: item.completed ? 'transparent' : item.color, borderWidth: item.completed ? 0 : 2 }]}>
             <View style={styles.iconContainer}>
-                <Ionicons name={item.icon as any} size={24} color={item.color} />
+                <Text style={{ fontSize: 24 }}>{item.icon}</Text>
             </View>
             <View style={styles.infoContainer}>
                 <Text style={styles.title}>{item.title}</Text>
@@ -52,80 +57,85 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
         </View>
     );
 
+    const filteredHabits = habits.filter(habit => habit.repeatType === activeTab);
+
+    const renderEmptyState = () => (
+        <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Bu kategoride henüz hiç alışkanlık yok.</Text>
+            <Text style={styles.emptySubText}>Yukarıdaki + butonuna basarak yeni bir {activeTab === 'Daily' ? 'günlük' : activeTab === 'Weekly' ? 'haftalık' : activeTab === 'Monthly' ? 'aylık' : 'yıllık'} alışkanlık ekle!</Text>
+        </View>
+    );
+
     const renderDailyView = () => (
         <FlatList
-            data={habits}
+            data={filteredHabits}
             renderItem={renderItem}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
-            ListEmptyComponent={
-                <View style={styles.emptyContainer}>
-                    <Text style={styles.emptyText}>Henüz hiç alışkanlık eklemedin.</Text>
-                    <Text style={styles.emptySubText}>Yukarıdaki + butonuna basarak yeni bir alışkanlık ekle!</Text>
-                </View>
-            }
+            ListEmptyComponent={renderEmptyState}
+            scrollEnabled={false}
         />
     );
 
-    const renderWeeklyView = () => {
-        if (habits.length === 0) {
-            return (
-                <View style={styles.emptyContainer}>
-                    <Text style={styles.emptyText}>Henüz hiç alışkanlık eklemedin.</Text>
-                </View>
-            );
-        }
-
-        return (
-            <View style={styles.placeholderContainer}>
-                <Text style={styles.placeholderText}>Haftalık Görünüm</Text>
-                {/* Placeholder for Weekly Grid: Mon-Sun checkmarks */}
-                {habits.map(habit => (
-                    <View key={habit.id} style={styles.weeklyCard}>
-                        <Text style={styles.weeklyTitle}>{habit.title}</Text>
-                        <View style={styles.weekGrid}>
-                            {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((day, index) => (
-                                <View key={index} style={styles.dayColumn}>
-                                    <Text style={styles.dayLabel}>{day}</Text>
-                                    <Ionicons name="ellipse-outline" size={24} color={COLORS.textSecondary} />
-                                </View>
-                            ))}
+    const renderWeeklyView = () => (
+        <View style={styles.placeholderContainer}>
+            {filteredHabits.length === 0 ? renderEmptyState() : filteredHabits.map(habit => (
+                <View key={habit.id} style={styles.weeklyCard}>
+                    <View style={styles.habitHeader}>
+                        <View style={styles.iconContainer}>
+                            <Text style={{ fontSize: 24 }}>{habit.icon}</Text>
+                        </View>
+                        <View style={styles.infoContainer}>
+                            <Text style={styles.title}>{habit.title}</Text>
+                            <Text style={styles.streak}>🔥 {habit.streak} Gün</Text>
                         </View>
                     </View>
-                ))}
-            </View>
-        );
-    };
-
-    const renderMonthlyView = () => {
-        const now = new Date();
-        const currentMonth = now.getMonth(); // 0-11
-        const currentYear = now.getFullYear();
-        const currentDay = now.getDate();
-
-        const monthNames = [
-            'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-            'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
-        ];
-
-        // Get number of days in current month
-        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-        return (
-            <View style={styles.placeholderContainer}>
-                <Text style={styles.placeholderText}>Aylık Görünüm</Text>
-                {/* Placeholder for Monthly Calendar */}
-                <View style={styles.calendarContainer}>
-                    <Text style={styles.monthTitle}>{monthNames[currentMonth]} {currentYear}</Text>
-                    <View style={styles.calendarGrid}>
-                        {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => (
-                            <View key={day} style={[styles.calendarDay, day === currentDay && styles.currentDay]}>
-                                <Text style={styles.calendarDayText}>{day}</Text>
-                                {/* No dots for empty state */}
+                    <View style={styles.weekGrid}>
+                        {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((day, index) => (
+                            <View key={index} style={styles.dayColumn}>
+                                <Text style={styles.dayLabel}>{day}</Text>
+                                <Ionicons name="ellipse-outline" size={24} color={COLORS.textSecondary} />
                             </View>
                         ))}
                     </View>
                 </View>
+            ))}
+        </View>
+    );
+
+    const renderMonthlyView = () => {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        const currentDay = now.getDate();
+        const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+        return (
+            <View style={styles.placeholderContainer}>
+                {filteredHabits.length === 0 ? renderEmptyState() : filteredHabits.map(habit => (
+                    <View key={habit.id} style={styles.weeklyCard}>
+                        <View style={styles.habitHeader}>
+                            <View style={styles.iconContainer}>
+                                <Text style={{ fontSize: 24 }}>{habit.icon}</Text>
+                            </View>
+                            <View style={styles.infoContainer}>
+                                <Text style={styles.title}>{habit.title}</Text>
+                                <Text style={styles.streak}>🔥 {habit.streak} Gün</Text>
+                            </View>
+                        </View>
+                        <View style={styles.calendarContainer}>
+                            <Text style={styles.monthTitle}>{monthNames[currentMonth]} {currentYear}</Text>
+                            <View style={styles.calendarGrid}>
+                                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => (
+                                    <View key={day} style={[styles.calendarDay, day === currentDay && styles.currentDay]}>
+                                        <Text style={styles.calendarDayText}>{day}</Text>
+                                    </View>
+                                ))}
+                            </View>
+                        </View>
+                    </View>
+                ))}
             </View>
         );
     };
@@ -137,23 +147,34 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
 
         return (
             <View style={styles.placeholderContainer}>
-                <Text style={styles.placeholderText}>Yıllık Görünüm ({currentYear})</Text>
-                {/* Placeholder for Yearly Heatmap */}
-                <View style={styles.heatmapContainer}>
-                    {Array.from({ length: 12 }, (_, monthIndex) => {
-                        const daysInMonth = new Date(currentYear, monthIndex + 1, 0).getDate();
-                        return (
-                            <View key={monthIndex} style={styles.monthRow}>
-                                <Text style={styles.monthLabel}>{monthNamesShort[monthIndex]}</Text>
-                                <View style={styles.heatmapGrid}>
-                                    {Array.from({ length: daysInMonth }, (_, dayIndex) => (
-                                        <View key={dayIndex} style={[styles.heatmapCell, { backgroundColor: '#333' }]} />
-                                    ))}
-                                </View>
+                {filteredHabits.length === 0 ? renderEmptyState() : filteredHabits.map(habit => (
+                    <View key={habit.id} style={styles.weeklyCard}>
+                        <View style={styles.habitHeader}>
+                            <View style={styles.iconContainer}>
+                                <Text style={{ fontSize: 24 }}>{habit.icon}</Text>
                             </View>
-                        );
-                    })}
-                </View>
+                            <View style={styles.infoContainer}>
+                                <Text style={styles.title}>{habit.title}</Text>
+                                <Text style={styles.streak}>🔥 {habit.streak} Gün</Text>
+                            </View>
+                        </View>
+                        <View style={styles.heatmapContainer}>
+                            {Array.from({ length: 12 }, (_, monthIndex) => {
+                                const daysInMonth = new Date(currentYear, monthIndex + 1, 0).getDate();
+                                return (
+                                    <View key={monthIndex} style={styles.monthRow}>
+                                        <Text style={styles.monthLabel}>{monthNamesShort[monthIndex]}</Text>
+                                        <View style={styles.heatmapGrid}>
+                                            {Array.from({ length: daysInMonth }, (_, dayIndex) => (
+                                                <View key={dayIndex} style={[styles.heatmapCell, { backgroundColor: '#333' }]} />
+                                            ))}
+                                        </View>
+                                    </View>
+                                );
+                            })}
+                        </View>
+                    </View>
+                ))}
             </View>
         );
     };
@@ -171,6 +192,11 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+    },
+    habitHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
     },
     listContent: {
         paddingBottom: 20,
