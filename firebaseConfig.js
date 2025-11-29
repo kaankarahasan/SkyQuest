@@ -27,5 +27,5 @@ const analytics = getAnalytics(app);
 export const auth = getAuth(app);
 
 // İleride diğer servisleri de buradan dışa aktarabilirsiniz:
-// import { getFirestore } from 'firebase/firestore';
-// export const db = getFirestore(app);
+import { getFirestore } from 'firebase/firestore';
+export const db = getFirestore(app);

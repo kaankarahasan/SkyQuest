@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { auth } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
 
 export const ProfileScreen = ({ navigation }: any) => {
-    const [name, setName] = useState('John Doe');
-    const [email, setEmail] = useState('johndoe@example.com');
-    const [password, setPassword] = useState('password123');
+    const user = auth.currentUser;
+    const [name, setName] = useState(user?.displayName || '');
+    const [email, setEmail] = useState(user?.email || '');
+    const [password, setPassword] = useState(''); // Password cannot be retrieved, only reset
 
     return (
         <SafeAreaView style={styles.container}>
@@ -21,7 +23,7 @@ export const ProfileScreen = ({ navigation }: any) => {
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.avatarSection}>
                     <Image
-                        source={{ uri: 'https://i.pravatar.cc/300?img=11' }}
+                        source={{ uri: 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' }}
                         style={styles.avatar}
                     />
                     <TouchableOpacity style={styles.changePhotoButton}>
@@ -63,13 +65,12 @@ export const ProfileScreen = ({ navigation }: any) => {
                 <Text style={styles.sectionTitle}>ROZETLER</Text>
                 <View style={styles.badgeCard}>
                     <View style={styles.badgeIconContainer}>
-                        {/* Placeholder for badge image */}
-                        <Ionicons name="shield-checkmark" size={48} color={COLORS.text} />
+                        <Ionicons name="ribbon-outline" size={48} color={COLORS.textSecondary} />
                     </View>
                     <View style={styles.badgeInfo}>
-                        <Text style={styles.badgeTitle}>Seri Katılım</Text>
+                        <Text style={[styles.badgeTitle, { color: COLORS.textSecondary }]}>Henüz hiç rozet kazanmadın</Text>
                         <Text style={styles.badgeDescription}>
-                            Göreve ardı ardına 7 gün katılarak cesaretini gösterdin. (Seviye 1, Seviye 3, Seviye 5)
+                            Alışkanlıklarını tamamlayarak ve seviye atlayarak rozetler kazanabilirsin.
                         </Text>
                     </View>
                 </View>

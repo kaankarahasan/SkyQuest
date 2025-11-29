@@ -1,34 +1,37 @@
 import { Ionicons } from '@expo/vector-icons';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import React, { useState } from 'react';
 import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { AddHabitModal } from '../components/AddHabitModal'; // We will reuse/refactor this
+import { auth, db } from '../../firebaseConfig';
+import { AddHabitModal } from '../components/AddHabitModal';
 import { COLORS } from '../constants/colors';
 
 // Mock Data
-const HABITS = [
-    {
-        id: '1',
-        title: '2 Litre Su İç',
-        streak: 6,
-        icon: 'water-outline',
-        color: '#4FC3F7',
-        description: 'Sağlığım için her gün 2 litre su içmeliyim.',
-        category: 'Su',
-    },
-    {
-        id: '2',
-        title: 'Her Gün 10.000 Adım Yürü',
-        streak: 21,
-        icon: 'walk-outline',
-        color: '#FFD54F',
-        description: 'Formda kalmak için yürü.',
-        category: 'Spor',
-    },
-];
+// Mock Data removed
+// const HABITS: any[] = []; // Empty for new users
 
 export const HabitsListScreen = ({ navigation }: any) => {
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedHabit, setSelectedHabit] = useState<any>(null);
+    const [habits, setHabits] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    React.useEffect(() => {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const q = query(collection(db, 'habits'), where('userId', '==', user.uid));
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const habitsData: any[] = [];
+            querySnapshot.forEach((doc) => {
+                habitsData.push({ id: doc.id, ...doc.data() });
+            });
+            setHabits(habitsData);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     const handleEdit = (habit: any) => {
         setSelectedHabit(habit);
@@ -65,14 +68,21 @@ export const HabitsListScreen = ({ navigation }: any) => {
                     <Ionicons name="chevron-back" size={28} color={COLORS.text} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>ALIŞKANLIKLAR LİSTESİ</Text>
-                <View style={{ width: 28 }} />
+                <TouchableOpacity onPress={() => setModalVisible(true)}>
+                    <Ionicons name="add" size={28} color={COLORS.text} />
+                </TouchableOpacity>
             </View>
 
             <FlatList
-                data={HABITS}
+                data={habits}
                 renderItem={renderItem}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContent}
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                        <Text style={styles.emptyText}>Henüz hiç alışkanlık eklemedin.</Text>
+                    </View>
+                }
             />
 
             <AddHabitModal
@@ -127,5 +137,15 @@ const styles = StyleSheet.create({
     streak: {
         color: COLORS.textSecondary,
         fontSize: 12,
+    },
+    emptyContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 40,
+    },
+    emptyText: {
+        color: COLORS.textSecondary,
+        fontSize: 16,
+        textAlign: 'center',
     },
 });

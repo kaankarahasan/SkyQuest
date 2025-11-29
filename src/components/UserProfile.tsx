@@ -2,29 +2,36 @@ import React from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { COLORS } from '../constants/colors';
 
-// Mock data for now
-const USER = {
-    name: 'John Doe',
-    level: 3,
-    title: 'Usta',
-    xp: 30,
+import { auth } from '../../firebaseConfig';
+
+// Default user data for new users
+const DEFAULT_USER = {
+    level: 1,
+    title: 'Çaylak',
+    xp: 0,
     maxXp: 100,
-    avatar: 'https://i.pravatar.cc/150?img=11', // Placeholder
+    avatar: 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png', // Generic placeholder
 };
 
 export const UserProfile = () => {
-    const progress = (USER.xp / USER.maxXp) * 100;
+    const user = auth.currentUser;
+    const displayName = user?.displayName || 'Kullanıcı';
+
+    // TODO: Fetch these from Firestore later
+    const userData = DEFAULT_USER;
+
+    const progress = (userData.xp / userData.maxXp) * 100;
 
     return (
         <View style={styles.container}>
             <View style={styles.avatarContainer}>
-                <Image source={{ uri: USER.avatar }} style={styles.avatar} />
+                <Image source={{ uri: userData.avatar }} style={styles.avatar} />
             </View>
             <View style={styles.infoContainer}>
                 <View style={styles.headerRow}>
-                    <Text style={styles.name}>{USER.name}</Text>
-                    <Text style={styles.levelInfo}>Level {USER.level}: {USER.title}</Text>
-                    <Text style={styles.xpText}>Puan: {USER.xp}</Text>
+                    <Text style={styles.name}>{displayName}</Text>
+                    <Text style={styles.levelInfo}>Level {userData.level}: {userData.title}</Text>
+                    <Text style={styles.xpText}>Puan: {userData.xp}</Text>
                 </View>
                 <View style={styles.progressBarBackground}>
                     <View style={[styles.progressBarFill, { width: `${progress}%` }]} />

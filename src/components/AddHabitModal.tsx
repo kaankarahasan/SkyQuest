@@ -1,6 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
+import { addDoc, collection } from 'firebase/firestore';
 import React, { useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Modal, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import EmojiPicker from 'rn-emoji-keyboard';
+import { auth, db } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
 
 interface AddHabitModalProps {
@@ -12,9 +15,24 @@ interface AddHabitModalProps {
 export const AddHabitModal = ({ visible, onClose, initialData }: AddHabitModalProps) => {
     const [habitName, setHabitName] = useState('');
     const [description, setDescription] = useState('');
-    const [selectedColor, setSelectedColor] = useState(COLORS.primary);
+    const [selectedColor, setSelectedColor] = useState<string | null>(null);
     const [reminderEnabled, setReminderEnabled] = useState(false);
     const [focusHabitEnabled, setFocusHabitEnabled] = useState(false);
+    const [repeatType, setRepeatType] = useState<'Daily' | 'Weekly' | 'Monthly' | 'Yearly'>('Daily');
+    const [selectedDays, setSelectedDays] = useState<number[]>([]); // 0=Mon, 6=Sun
+    const [category, setCategory] = useState('');
+    const [selectedEmoji, setSelectedEmoji] = useState('🤩');
+    const [emojiPickerVisible, setEmojiPickerVisible] = useState(false);
+
+    const isFormValid = habitName.trim().length > 0 && category.trim().length > 0 && selectedColor !== null;
+
+    const toggleDay = (index: number) => {
+        if (selectedDays.includes(index)) {
+            setSelectedDays(selectedDays.filter(d => d !== index));
+        } else {
+            setSelectedDays([...selectedDays, index]);
+        }
+    };
 
     // Effect to populate data when initialData changes
     React.useEffect(() => {
@@ -27,9 +45,64 @@ export const AddHabitModal = ({ visible, onClose, initialData }: AddHabitModalPr
             // Reset fields
             setHabitName('');
             setDescription('');
-            setSelectedColor(COLORS.primary);
+            setSelectedColor(null);
+            setSelectedEmoji('🤩');
         }
     }, [initialData, visible]);
+
+    // Effect to set default color when Focus Habit is enabled
+    React.useEffect(() => {
+        if (focusHabitEnabled && !selectedColor) {
+            setSelectedColor(colors[0]);
+        } else if (!focusHabitEnabled) {
+            setSelectedColor(null);
+        }
+    }, [focusHabitEnabled]);
+
+    const handleSave = async () => {
+        if (!isFormValid) return;
+
+        const user = auth.currentUser;
+        if (!user) {
+            Alert.alert('Hata', 'Kullanıcı oturumu bulunamadı.');
+            return;
+        }
+
+        try {
+            const habitData = {
+                userId: user.uid,
+                title: habitName,
+                icon: selectedEmoji,
+                description,
+                category,
+                color: selectedColor,
+                repeatType,
+                selectedDays,
+                reminderEnabled,
+                focusHabitEnabled,
+                createdAt: new Date(),
+                streak: 0,
+                completedDates: [], // Array of timestamps or date strings
+            };
+
+            await addDoc(collection(db, 'habits'), habitData);
+
+
+
+            // Alert.alert('Başarılı', 'Alışkanlık eklendi!'); // Removed for seamless close
+            onClose();
+            // Reset form
+            setHabitName('');
+            setDescription('');
+            setCategory('');
+            setSelectedEmoji('🤩');
+            setSelectedDays([]);
+            setRepeatType('Daily');
+        } catch (error) {
+            console.error("Error adding habit: ", error);
+            Alert.alert('Hata', 'Alışkanlık eklenirken bir sorun oluştu.');
+        }
+    };
 
     const colors = [
         '#4CAF50', '#FF9800', '#2196F3', '#9C27B0', '#F44336', '#FFEB3B', '#00BCD4',
@@ -49,17 +122,18 @@ export const AddHabitModal = ({ visible, onClose, initialData }: AddHabitModalPr
                             <Ionicons name="close" size={24} color={COLORS.text} />
                         </TouchableOpacity>
                         <Text style={styles.headerTitle}>{initialData ? 'ALIŞKANLIK DÜZENLEME' : 'ALIŞKANLIK EKLEME'}</Text>
-                        <TouchableOpacity onPress={onClose}>
-                            <Text style={styles.saveButton}>Kaydet</Text>
+                        <TouchableOpacity onPress={handleSave} disabled={!isFormValid}>
+                            <Text style={[styles.saveButton, !isFormValid && styles.disabledSaveButton]}>Kaydet</Text>
                         </TouchableOpacity>
                     </View>
 
                     <ScrollView contentContainerStyle={styles.scrollContent}>
                         <View style={styles.emojiContainer}>
-                            {/* Placeholder for Emoji Picker/Display */}
-                            <View style={styles.emojiPlaceholder}>
-                                <Text style={{ fontSize: 40 }}>🤩</Text>
-                            </View>
+                            <TouchableOpacity onPress={() => setEmojiPickerVisible(true)}>
+                                <View style={styles.emojiPlaceholder}>
+                                    <Text style={{ fontSize: 40 }}>{selectedEmoji}</Text>
+                                </View>
+                            </TouchableOpacity>
                         </View>
 
                         <TextInput
@@ -78,39 +152,39 @@ export const AddHabitModal = ({ visible, onClose, initialData }: AddHabitModalPr
                             onChangeText={setDescription}
                         />
 
-                        <TouchableOpacity style={styles.input}>
-                            <Text style={{ color: COLORS.textSecondary }}>Kategori Ekle</Text>
-                        </TouchableOpacity>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Kategori Ekle"
+                            placeholderTextColor={COLORS.textSecondary}
+                            value={category}
+                            onChangeText={setCategory}
+                        />
 
-                        <View style={styles.colorContainer}>
-                            {colors.map((color) => (
-                                <TouchableOpacity
-                                    key={color}
-                                    style={[styles.colorCircle, { backgroundColor: color }]}
-                                    onPress={() => setSelectedColor(color)}
-                                >
-                                    {selectedColor === color && (
-                                        <Ionicons name="checkmark" size={16} color="white" />
-                                    )}
-                                </TouchableOpacity>
-                            ))}
-                            <TouchableOpacity style={[styles.colorCircle, { backgroundColor: COLORS.error }]}>
-                                <Ionicons name="checkmark" size={16} color="white" />
-                            </TouchableOpacity>
-                        </View>
+
 
                         <Text style={styles.sectionTitle}>Tekrar</Text>
                         <View style={styles.repeatContainer}>
-                            <TouchableOpacity style={[styles.repeatButton, styles.activeRepeatButton]}><Text style={styles.activeRepeatText}>Günlük</Text></TouchableOpacity>
-                            <TouchableOpacity style={styles.repeatButton}><Text style={styles.repeatText}>Haftalık</Text></TouchableOpacity>
-                            <TouchableOpacity style={styles.repeatButton}><Text style={styles.repeatText}>Aylık</Text></TouchableOpacity>
-                            <TouchableOpacity style={styles.repeatButton}><Text style={styles.repeatText}>Yıllık</Text></TouchableOpacity>
+                            {['Daily', 'Weekly', 'Monthly', 'Yearly'].map((type) => (
+                                <TouchableOpacity
+                                    key={type}
+                                    style={[styles.repeatButton, repeatType === type && styles.activeRepeatButton]}
+                                    onPress={() => setRepeatType(type as any)}
+                                >
+                                    <Text style={repeatType === type ? styles.activeRepeatText : styles.repeatText}>
+                                        {type === 'Daily' ? 'Günlük' : type === 'Weekly' ? 'Haftalık' : type === 'Monthly' ? 'Aylık' : 'Yıllık'}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
                         </View>
 
                         <Text style={styles.sectionTitle}>Bu Günlerde</Text>
                         <View style={styles.daysContainer}>
                             {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((day, index) => (
-                                <TouchableOpacity key={index} style={[styles.dayButton, index < 5 && { backgroundColor: COLORS.success }]}>
+                                <TouchableOpacity
+                                    key={index}
+                                    style={[styles.dayButton, selectedDays.includes(index) && { backgroundColor: COLORS.success }]}
+                                    onPress={() => toggleDay(index)}
+                                >
                                     <Text style={styles.dayText}>{day}</Text>
                                 </TouchableOpacity>
                             ))}
@@ -136,6 +210,32 @@ export const AddHabitModal = ({ visible, onClose, initialData }: AddHabitModalPr
                             />
                         </View>
 
+                        {focusHabitEnabled && (
+                            <View style={styles.colorContainer}>
+                                {colors.map((color) => (
+                                    <TouchableOpacity
+                                        key={color}
+                                        style={[styles.colorCircle, { backgroundColor: color }]}
+                                        onPress={() => setSelectedColor(color)}
+                                    >
+                                        {selectedColor === color && (
+                                            <Ionicons name="checkmark" size={16} color="white" />
+                                        )}
+                                    </TouchableOpacity>
+                                ))}
+                                <TouchableOpacity
+                                    style={[styles.colorCircle, { backgroundColor: COLORS.error }]}
+                                    onPress={() => setSelectedColor(COLORS.error)}
+                                >
+                                    {selectedColor === COLORS.error && (
+                                        <Ionicons name="checkmark" size={16} color="white" />
+                                    )}
+                                </TouchableOpacity>
+                            </View>
+                        )}
+
+
+
                         {initialData && (
                             <TouchableOpacity style={styles.deleteButton}>
                                 <Text style={styles.deleteButtonText}>Sil</Text>
@@ -145,6 +245,44 @@ export const AddHabitModal = ({ visible, onClose, initialData }: AddHabitModalPr
                     </ScrollView>
                 </View>
             </View>
+
+            <EmojiPicker
+                onEmojiSelected={(emojiObject: any) => {
+                    setSelectedEmoji(emojiObject.emoji);
+                    setEmojiPickerVisible(false);
+                }}
+                open={emojiPickerVisible}
+                onClose={() => setEmojiPickerVisible(false)}
+                theme={{
+                    container: '#1E1E1E',
+                    header: '#1E1E1E',
+                    knob: '#333',
+                    search: {
+                        background: '#333',
+                        text: COLORS.text,
+                        placeholder: COLORS.textSecondary,
+                        icon: COLORS.textSecondary,
+                    },
+                    category: {
+                        icon: COLORS.textSecondary,
+                        iconActive: COLORS.primary,
+                        container: '#1E1E1E',
+                        containerActive: '#333',
+                    },
+                }}
+                styles={{
+                    container: {
+                        borderTopLeftRadius: 20,
+                        borderTopRightRadius: 20,
+                    },
+                    header: {
+                        color: COLORS.text,
+                    },
+                }}
+                categoryPosition="top"
+                expandedHeight={500}
+                defaultHeight={500}
+            />
         </Modal>
     );
 };
@@ -174,13 +312,18 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     saveButton: {
-        color: COLORS.primary, // Or a specific green from design
-        backgroundColor: '#334422', // Darker green bg
-        paddingHorizontal: 12,
-        paddingVertical: 6,
+        color: '#FFFFFF',
+        backgroundColor: COLORS.success, // Use success color for active state
+        paddingHorizontal: 16,
+        paddingVertical: 8,
         borderRadius: 8,
         overflow: 'hidden',
         fontWeight: 'bold',
+        fontSize: 16,
+    },
+    disabledSaveButton: {
+        backgroundColor: '#555',
+        color: '#888',
     },
     scrollContent: {
         paddingBottom: 40,
@@ -269,8 +412,9 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 16,
-        backgroundColor: '#2C2C2C', // Optional: if it needs a bg
-        padding: 0, // Or padding if it has a background
+        backgroundColor: '#2C2C2C',
+        padding: 16, // Added padding
+        borderRadius: 12, // Added rounded corners
     },
     switchLabel: {
         color: COLORS.text,

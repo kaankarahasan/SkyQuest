@@ -1,10 +1,24 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerContentScrollView } from '@react-navigation/drawer';
+import { signOut } from 'firebase/auth';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { auth } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
 
 export const CustomDrawerContent = (props: any) => {
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            props.navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+            });
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    };
+
     return (
         <View style={styles.container}>
             <DrawerContentScrollView {...props} contentContainerStyle={styles.scrollContent}>
@@ -52,7 +66,7 @@ export const CustomDrawerContent = (props: any) => {
             </DrawerContentScrollView>
 
             <View style={styles.footer}>
-                <TouchableOpacity style={styles.logoutButton}>
+                <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <Text style={styles.logoutText}>Çıkış Yap</Text>
                 </TouchableOpacity>
             </View>
