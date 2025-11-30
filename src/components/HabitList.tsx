@@ -1,20 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
 import React from 'react';
 import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
-
-type TabType = 'Daily' | 'Weekly' | 'Monthly' | 'Yearly';
+import { Habit, RepeatType } from '../types';
+import { calculateStreak, getCompletionKey, isCompleted } from '../utils/habitUtils';
 
 interface HabitListProps {
-    activeTab: TabType;
+    activeTab: RepeatType;
 }
 
-// const MOCK_HABITS: any[] = []; // Empty for new users
-
 export const HabitList = ({ activeTab }: HabitListProps) => {
-    const [habits, setHabits] = React.useState<any[]>([]);
+    const [habits, setHabits] = React.useState<Habit[]>([]);
     const [loading, setLoading] = React.useState(true);
 
     React.useEffect(() => {
@@ -22,9 +20,23 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
             if (user) {
                 const q = query(collection(db, 'habits'), where('userId', '==', user.uid));
                 const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
-                    const habitsData: any[] = [];
+                    const habitsData: Habit[] = [];
                     querySnapshot.forEach((doc) => {
-                        habitsData.push({ id: doc.id, ...doc.data() });
+                        const data = doc.data();
+                        habitsData.push({
+                            id: doc.id,
+                            userId: data.userId,
+                            title: data.title,
+                            description: data.description,
+                            icon: data.icon,
+                            color: data.color,
+                            repeatType: data.repeatType,
+                            selectedDays: data.selectedDays,
+                            createdAt: data.createdAt,
+                            completedDates: data.completedDates || [],
+                            streak: calculateStreak(data.completedDates || [], data.repeatType),
+                            category: data.category,
+                        });
                     });
                     setHabits(habitsData);
                     setLoading(false);
@@ -38,24 +50,53 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
 
         return () => unsubscribeAuth();
     }, []);
-    const renderItem = ({ item }: { item: any }) => (
-        <View style={[styles.card, { borderColor: item.completed ? 'transparent' : item.color, borderWidth: item.completed ? 0 : 2 }]}>
-            <View style={styles.iconContainer}>
-                <Text style={{ fontSize: 24 }}>{item.icon}</Text>
+
+    const toggleHabitCompletion = async (habit: Habit) => {
+        const today = new Date();
+        const key = getCompletionKey(today, habit.repeatType);
+        const isAlreadyCompleted = isCompleted(habit.completedDates, habit.repeatType, today);
+
+        let newCompletedDates = [...habit.completedDates];
+        if (isAlreadyCompleted) {
+            newCompletedDates = newCompletedDates.filter(d => d !== key);
+        } else {
+            newCompletedDates.push(key);
+        }
+
+        const newStreak = calculateStreak(newCompletedDates, habit.repeatType);
+
+        try {
+            const habitRef = doc(db, 'habits', habit.id);
+            await updateDoc(habitRef, {
+                completedDates: newCompletedDates,
+                streak: newStreak
+            });
+        } catch (error) {
+            console.error("Error updating habit completion:", error);
+        }
+    };
+
+    const renderItem = ({ item }: { item: Habit }) => {
+        const completed = isCompleted(item.completedDates, item.repeatType);
+        return (
+            <View style={[styles.card, { borderColor: completed ? 'transparent' : item.color, borderWidth: completed ? 0 : 2 }]}>
+                <View style={styles.iconContainer}>
+                    <Text style={{ fontSize: 24 }}>{item.icon}</Text>
+                </View>
+                <View style={styles.infoContainer}>
+                    <Text style={styles.title}>{item.title}</Text>
+                    <Text style={styles.streak}>🔥 {item.streak} {item.repeatType === 'Daily' ? 'Gün' : item.repeatType === 'Weekly' ? 'Hafta' : item.repeatType === 'Monthly' ? 'Ay' : 'Yıl'}</Text>
+                </View>
+                <TouchableOpacity style={styles.checkbox} onPress={() => toggleHabitCompletion(item)}>
+                    {completed ? (
+                        <Ionicons name="checkbox" size={32} color={COLORS.success} />
+                    ) : (
+                        <Ionicons name="square-outline" size={32} color={COLORS.textSecondary} />
+                    )}
+                </TouchableOpacity>
             </View>
-            <View style={styles.infoContainer}>
-                <Text style={styles.title}>{item.title}</Text>
-                <Text style={styles.streak}>🔥 {item.streak} Gün</Text>
-            </View>
-            <TouchableOpacity style={styles.checkbox}>
-                {item.completed ? (
-                    <Ionicons name="checkbox" size={32} color={COLORS.success} />
-                ) : (
-                    <Ionicons name="square-outline" size={32} color={COLORS.textSecondary} />
-                )}
-            </TouchableOpacity>
-        </View>
-    );
+        );
+    };
 
     const filteredHabits = habits.filter(habit => habit.repeatType === activeTab);
 
@@ -87,8 +128,15 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                         </View>
                         <View style={styles.infoContainer}>
                             <Text style={styles.title}>{habit.title}</Text>
-                            <Text style={styles.streak}>🔥 {habit.streak} Gün</Text>
+                            <Text style={styles.streak}>🔥 {habit.streak} Hafta</Text>
                         </View>
+                        <TouchableOpacity style={styles.checkbox} onPress={() => toggleHabitCompletion(habit)}>
+                            {isCompleted(habit.completedDates, habit.repeatType) ? (
+                                <Ionicons name="checkbox" size={32} color={COLORS.success} />
+                            ) : (
+                                <Ionicons name="square-outline" size={32} color={COLORS.textSecondary} />
+                            )}
+                        </TouchableOpacity>
                     </View>
                     <View style={styles.weekGrid}>
                         {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((day, index) => (
@@ -121,8 +169,15 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                             </View>
                             <View style={styles.infoContainer}>
                                 <Text style={styles.title}>{habit.title}</Text>
-                                <Text style={styles.streak}>🔥 {habit.streak} Gün</Text>
+                                <Text style={styles.streak}>🔥 {habit.streak} Ay</Text>
                             </View>
+                            <TouchableOpacity style={styles.checkbox} onPress={() => toggleHabitCompletion(habit)}>
+                                {isCompleted(habit.completedDates, habit.repeatType) ? (
+                                    <Ionicons name="checkbox" size={32} color={COLORS.success} />
+                                ) : (
+                                    <Ionicons name="square-outline" size={32} color={COLORS.textSecondary} />
+                                )}
+                            </TouchableOpacity>
                         </View>
                         <View style={styles.calendarContainer}>
                             <Text style={styles.monthTitle}>{monthNames[currentMonth]} {currentYear}</Text>
@@ -155,8 +210,15 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                             </View>
                             <View style={styles.infoContainer}>
                                 <Text style={styles.title}>{habit.title}</Text>
-                                <Text style={styles.streak}>🔥 {habit.streak} Gün</Text>
+                                <Text style={styles.streak}>🔥 {habit.streak} Yıl</Text>
                             </View>
+                            <TouchableOpacity style={styles.checkbox} onPress={() => toggleHabitCompletion(habit)}>
+                                {isCompleted(habit.completedDates, habit.repeatType) ? (
+                                    <Ionicons name="checkbox" size={32} color={COLORS.success} />
+                                ) : (
+                                    <Ionicons name="square-outline" size={32} color={COLORS.textSecondary} />
+                                )}
+                            </TouchableOpacity>
                         </View>
                         <View style={styles.heatmapContainer}>
                             {Array.from({ length: 12 }, (_, monthIndex) => {

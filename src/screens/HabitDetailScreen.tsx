@@ -5,10 +5,12 @@ import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, Vi
 import { db } from '../../firebaseConfig';
 import { AddHabitModal } from '../components/AddHabitModal';
 import { COLORS } from '../constants/colors';
+import { Habit } from '../types';
+import { calculateStreak, isCompleted } from '../utils/habitUtils';
 
 export const HabitDetailScreen = ({ route, navigation }: any) => {
     const { habit } = route.params;
-    const [localHabit, setLocalHabit] = useState(habit);
+    const [localHabit, setLocalHabit] = useState<Habit>(habit);
     const [modalVisible, setModalVisible] = useState(false);
     const [viewMode, setViewMode] = useState<'weekly' | 'monthly' | 'yearly'>('monthly');
 
@@ -33,7 +35,21 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
         const habitRef = doc(db, 'habits', habit.id);
         const unsubscribe = onSnapshot(habitRef, (doc) => {
             if (doc.exists()) {
-                setLocalHabit({ id: doc.id, ...doc.data() });
+                const data = doc.data();
+                setLocalHabit({
+                    id: doc.id,
+                    userId: data.userId,
+                    title: data.title,
+                    description: data.description,
+                    icon: data.icon,
+                    color: data.color,
+                    repeatType: data.repeatType,
+                    selectedDays: data.selectedDays,
+                    createdAt: data.createdAt,
+                    completedDates: data.completedDates || [],
+                    streak: calculateStreak(data.completedDates || [], data.repeatType),
+                    category: data.category,
+                });
             }
         });
         return () => unsubscribe();
@@ -61,6 +77,9 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
             ]
         );
     };
+
+    const currentStreak = calculateStreak(localHabit.completedDates, localHabit.repeatType);
+    const totalCompletions = localHabit.completedDates ? localHabit.completedDates.length : 0;
 
     return (
         <SafeAreaView style={styles.container}>
@@ -109,12 +128,29 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
                 <View style={styles.calendarCard}>
                     {viewMode === 'weekly' && (
                         <View style={styles.weekGrid}>
-                            {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((day, index) => (
-                                <View key={index} style={styles.dayColumn}>
-                                    <Text style={styles.dayLabel}>{day}</Text>
-                                    <Ionicons name="ellipse-outline" size={24} color={COLORS.textSecondary} />
-                                </View>
-                            ))}
+                            {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((day, index) => {
+                                // Calculate if this day is completed in the current week
+                                // This is tricky because "Weekly" view usually implies "this week"
+                                // Let's assume we show the current week's status
+                                const today = new Date();
+                                const currentDay = today.getDay() || 7; // 1-7
+                                const diff = index + 1 - currentDay; // index is 0-6 (Mon-Sun), currentDay is 1-7 (Mon-Sun)
+                                const targetDate = new Date(today);
+                                targetDate.setDate(today.getDate() + diff);
+
+                                const isDone = isCompleted(localHabit.completedDates, localHabit.repeatType, targetDate);
+
+                                return (
+                                    <View key={index} style={styles.dayColumn}>
+                                        <Text style={styles.dayLabel}>{day}</Text>
+                                        <Ionicons
+                                            name={isDone ? "checkmark-circle" : "ellipse-outline"}
+                                            size={24}
+                                            color={isDone ? COLORS.success : COLORS.textSecondary}
+                                        />
+                                    </View>
+                                );
+                            })}
                         </View>
                     )}
 
@@ -124,11 +160,18 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
                                 {['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'][new Date().getMonth()]} {new Date().getFullYear()}
                             </Text>
                             <View style={styles.calendarGrid}>
-                                {Array.from({ length: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() }, (_, i) => i + 1).map(day => (
-                                    <View key={day} style={[styles.calendarDay, day === new Date().getDate() && styles.currentDay]}>
-                                        <Text style={styles.calendarDayText}>{day}</Text>
-                                    </View>
-                                ))}
+                                {Array.from({ length: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() }, (_, i) => i + 1).map(day => {
+                                    const date = new Date(new Date().getFullYear(), new Date().getMonth(), day);
+                                    const isDone = isCompleted(localHabit.completedDates, localHabit.repeatType, date);
+                                    const isToday = day === new Date().getDate();
+
+                                    return (
+                                        <View key={day} style={[styles.calendarDay, isToday && styles.currentDay, isDone && !isToday && styles.completedDay]}>
+                                            <Text style={[styles.calendarDayText, isDone && !isToday && { color: COLORS.success }]}>{day}</Text>
+                                            {isDone && isToday && <View style={styles.dot} />}
+                                        </View>
+                                    );
+                                })}
                             </View>
                         </View>
                     )}
@@ -143,9 +186,13 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
                                             {['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'][monthIndex]}
                                         </Text>
                                         <View style={styles.heatmapGrid}>
-                                            {Array.from({ length: daysInMonth }, (_, dayIndex) => (
-                                                <View key={dayIndex} style={[styles.heatmapCell, { backgroundColor: '#444' }]} />
-                                            ))}
+                                            {Array.from({ length: daysInMonth }, (_, dayIndex) => {
+                                                const date = new Date(new Date().getFullYear(), monthIndex, dayIndex + 1);
+                                                const isDone = isCompleted(localHabit.completedDates, localHabit.repeatType, date);
+                                                return (
+                                                    <View key={dayIndex} style={[styles.heatmapCell, { backgroundColor: isDone ? COLORS.success : '#444' }]} />
+                                                );
+                                            })}
                                         </View>
                                     </View>
                                 );
@@ -157,14 +204,14 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
                 <View style={styles.statsRow}>
                     <View style={styles.statCard}>
                         <Ionicons name="flame" size={40} color="orange" />
-                        <Text style={styles.statValue}>7 Gün</Text>
+                        <Text style={styles.statValue}>{currentStreak} {localHabit.repeatType === 'Daily' ? 'Gün' : localHabit.repeatType === 'Weekly' ? 'Hafta' : localHabit.repeatType === 'Monthly' ? 'Ay' : 'Yıl'}</Text>
                         <Text style={styles.statLabel}>Seri</Text>
                     </View>
                     <View style={styles.statCard}>
                         <Ionicons name="rocket" size={40} color={COLORS.text} />
                         <Text style={styles.statLabel}>Toplam</Text>
                         <Text style={styles.statLabel}>Kazanılan Puan</Text>
-                        <Text style={styles.statValue}>60</Text>
+                        <Text style={styles.statValue}>{totalCompletions * 10}</Text>
                     </View>
                 </View>
                 <View style={styles.statsRow}>
@@ -172,7 +219,7 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
                         <Ionicons name="checkmark-circle" size={40} color={COLORS.success} />
                         <Text style={styles.statLabel}>Toplam</Text>
                         <Text style={styles.statLabel}>Tamamlama</Text>
-                        <Text style={styles.statValue}>24</Text>
+                        <Text style={styles.statValue}>{totalCompletions}</Text>
                     </View>
                 </View>
 
@@ -302,8 +349,19 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.primary,
         borderRadius: 20,
     },
+    completedDay: {
+        // backgroundColor: 'rgba(76, 175, 80, 0.2)', // Optional: light green background
+        // borderRadius: 20,
+    },
     calendarDayText: {
         color: COLORS.text,
+    },
+    dot: {
+        width: 4,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: COLORS.success,
+        marginTop: 2,
     },
     heatmapContainer: {
         padding: 0,
