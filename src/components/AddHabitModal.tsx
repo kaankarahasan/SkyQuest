@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
 import React, { useState } from 'react';
 import { Alert, Modal, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import EmojiPicker from 'rn-emoji-keyboard';
@@ -10,9 +10,10 @@ interface AddHabitModalProps {
     visible: boolean;
     onClose: () => void;
     initialData?: any; // For edit mode
+    onDelete?: () => void;
 }
 
-export const AddHabitModal = ({ visible, onClose, initialData }: AddHabitModalProps) => {
+export const AddHabitModal = ({ visible, onClose, initialData, onDelete }: AddHabitModalProps) => {
     const [habitName, setHabitName] = useState('');
     const [description, setDescription] = useState('');
     const [selectedColor, setSelectedColor] = useState<string | null>(null);
@@ -40,12 +41,22 @@ export const AddHabitModal = ({ visible, onClose, initialData }: AddHabitModalPr
             setHabitName(initialData.title);
             setDescription(initialData.description || '');
             setSelectedColor(initialData.color || COLORS.primary);
-            // ... set other fields
+            setCategory(initialData.category || '');
+            setRepeatType(initialData.repeatType || 'Daily');
+            setSelectedDays(initialData.selectedDays || []);
+            setReminderEnabled(initialData.reminderEnabled || false);
+            setFocusHabitEnabled(initialData.focusHabitEnabled || false);
+            setSelectedEmoji(initialData.icon || '🤩');
         } else {
             // Reset fields
             setHabitName('');
             setDescription('');
             setSelectedColor(null);
+            setCategory('');
+            setRepeatType('Daily');
+            setSelectedDays([]);
+            setReminderEnabled(false);
+            setFocusHabitEnabled(false);
             setSelectedEmoji('🤩');
         }
     }, [initialData, visible]);
@@ -80,27 +91,35 @@ export const AddHabitModal = ({ visible, onClose, initialData }: AddHabitModalPr
                 selectedDays,
                 reminderEnabled,
                 focusHabitEnabled,
-                createdAt: new Date(),
-                streak: 0,
-                completedDates: [], // Array of timestamps or date strings
             };
 
-            await addDoc(collection(db, 'habits'), habitData);
+            if (initialData && initialData.id) {
+                // Update existing habit
+                const habitRef = doc(db, 'habits', initialData.id);
+                await updateDoc(habitRef, habitData);
+            } else {
+                // Create new habit
+                await addDoc(collection(db, 'habits'), {
+                    ...habitData,
+                    createdAt: new Date(),
+                    streak: 0,
+                    completedDates: [],
+                });
+            }
 
-
-
-            // Alert.alert('Başarılı', 'Alışkanlık eklendi!'); // Removed for seamless close
             onClose();
-            // Reset form
-            setHabitName('');
-            setDescription('');
-            setCategory('');
-            setSelectedEmoji('🤩');
-            setSelectedDays([]);
-            setRepeatType('Daily');
+            // Reset form if not editing (or maybe always reset?)
+            if (!initialData) {
+                setHabitName('');
+                setDescription('');
+                setCategory('');
+                setSelectedEmoji('🤩');
+                setSelectedDays([]);
+                setRepeatType('Daily');
+            }
         } catch (error) {
-            console.error("Error adding habit: ", error);
-            Alert.alert('Hata', 'Alışkanlık eklenirken bir sorun oluştu.');
+            console.error("Error saving habit: ", error);
+            Alert.alert('Hata', 'Alışkanlık kaydedilirken bir sorun oluştu.');
         }
     };
 
@@ -236,8 +255,8 @@ export const AddHabitModal = ({ visible, onClose, initialData }: AddHabitModalPr
 
 
 
-                        {initialData && (
-                            <TouchableOpacity style={styles.deleteButton}>
+                        {initialData && onDelete && (
+                            <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
                                 <Text style={styles.deleteButtonText}>Sil</Text>
                             </TouchableOpacity>
                         )}

@@ -1,10 +1,48 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { deleteDoc, doc, onSnapshot } from 'firebase/firestore';
+import React, { useState } from 'react';
+import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { db } from '../../firebaseConfig';
+import { AddHabitModal } from '../components/AddHabitModal';
 import { COLORS } from '../constants/colors';
 
 export const HabitDetailScreen = ({ route, navigation }: any) => {
     const { habit } = route.params;
+    const [localHabit, setLocalHabit] = useState(habit);
+    const [modalVisible, setModalVisible] = useState(false);
+
+    React.useEffect(() => {
+        const habitRef = doc(db, 'habits', habit.id);
+        const unsubscribe = onSnapshot(habitRef, (doc) => {
+            if (doc.exists()) {
+                setLocalHabit({ id: doc.id, ...doc.data() });
+            }
+        });
+        return () => unsubscribe();
+    }, [habit.id]);
+
+    const handleDelete = () => {
+        Alert.alert(
+            "Alışkanlığı Sil",
+            "Bu alışkanlığı silmek istediğinize emin misiniz?",
+            [
+                { text: "Vazgeç", style: "cancel" },
+                {
+                    text: "Sil",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await deleteDoc(doc(db, 'habits', habit.id));
+                            navigation.goBack();
+                        } catch (error) {
+                            console.error("Error deleting habit:", error);
+                            Alert.alert("Hata", "Alışkanlık silinemedi.");
+                        }
+                    }
+                }
+            ]
+        );
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -13,10 +51,10 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
                     <Ionicons name="chevron-back" size={28} color={COLORS.text} />
                 </TouchableOpacity>
                 <View style={styles.headerRight}>
-                    <TouchableOpacity style={{ marginRight: 16 }}>
+                    <TouchableOpacity style={{ marginRight: 16 }} onPress={handleDelete}>
                         <Ionicons name="trash-outline" size={28} color={COLORS.text} />
                     </TouchableOpacity>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => setModalVisible(true)}>
                         <Ionicons name="create-outline" size={28} color={COLORS.text} />
                     </TouchableOpacity>
                 </View>
@@ -24,12 +62,12 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
 
             <ScrollView contentContainerStyle={styles.content}>
                 <View style={styles.iconSection}>
-                    <Ionicons name={habit.icon} size={80} color={habit.color} />
+                    <Ionicons name={localHabit.icon} size={80} color={localHabit.color} />
                 </View>
 
-                <Text style={styles.title}>{habit.title}</Text>
-                <Text style={styles.description}>{habit.description}</Text>
-                <Text style={styles.category}>Kategori: <Text style={{ fontWeight: 'bold' }}>{habit.category}</Text></Text>
+                <Text style={styles.title}>{localHabit.title}</Text>
+                <Text style={styles.description}>{localHabit.description}</Text>
+                <Text style={styles.category}>Kategori: <Text style={{ fontWeight: 'bold' }}>{localHabit.category}</Text></Text>
 
                 <View style={styles.refreshSection}>
                     <Ionicons name="refresh" size={24} color={COLORS.text} />
@@ -85,6 +123,13 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
                 </View>
 
             </ScrollView>
+
+            <AddHabitModal
+                visible={modalVisible}
+                onClose={() => setModalVisible(false)}
+                initialData={localHabit}
+                onDelete={handleDelete}
+            />
         </SafeAreaView>
     );
 };
