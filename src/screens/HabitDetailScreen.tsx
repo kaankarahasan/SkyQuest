@@ -10,6 +10,24 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
     const { habit } = route.params;
     const [localHabit, setLocalHabit] = useState(habit);
     const [modalVisible, setModalVisible] = useState(false);
+    const [viewMode, setViewMode] = useState<'weekly' | 'monthly' | 'yearly'>('monthly');
+
+    const formatRepeatText = (days: number[]) => {
+        if (!days || days.length === 0) return 'Seçili gün yok';
+        if (days.length === 7) return 'Her Gün';
+
+        const weekdays = [0, 1, 2, 3, 4];
+        const weekends = [5, 6];
+
+        const isWeekdays = days.length === 5 && weekdays.every(d => days.includes(d));
+        const isWeekends = days.length === 2 && weekends.every(d => days.includes(d));
+
+        if (isWeekdays) return 'Hafta İçi';
+        if (isWeekends) return 'Hafta Sonu';
+
+        const dayNames = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+        return days.sort((a, b) => a - b).map(d => dayNames[d]).join(', ');
+    };
 
     React.useEffect(() => {
         const habitRef = doc(db, 'habits', habit.id);
@@ -62,7 +80,7 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
 
             <ScrollView contentContainerStyle={styles.content}>
                 <View style={styles.iconSection}>
-                    <Ionicons name={localHabit.icon} size={80} color={localHabit.color} />
+                    <Text style={{ fontSize: 80 }}>{localHabit.icon}</Text>
                 </View>
 
                 <Text style={styles.title}>{localHabit.title}</Text>
@@ -71,33 +89,69 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
 
                 <View style={styles.refreshSection}>
                     <Ionicons name="refresh" size={24} color={COLORS.text} />
-                    <Text style={styles.refreshText}>Her Gün</Text>
+                    <Text style={styles.refreshText}>{formatRepeatText(localHabit.selectedDays)}</Text>
+                </View>
+
+                <View style={styles.viewSelector}>
+                    {(['weekly', 'monthly', 'yearly'] as const).map((mode) => (
+                        <TouchableOpacity
+                            key={mode}
+                            style={[styles.viewOption, viewMode === mode && styles.activeViewOption]}
+                            onPress={() => setViewMode(mode)}
+                        >
+                            <Text style={[styles.viewOptionText, viewMode === mode && styles.activeViewOptionText]}>
+                                {mode === 'weekly' ? 'Haftalık' : mode === 'monthly' ? 'Aylık' : 'Yıllık'}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
                 </View>
 
                 <View style={styles.calendarCard}>
-                    <View style={styles.calendarHeader}>
-                        <Text style={styles.monthText}>Kasım</Text>
-                        <Text style={styles.yearText}>2025</Text>
-                    </View>
-                    <Text style={styles.daysHeader}>Pzt Sal Çar Per Cum Cmt Paz</Text>
+                    {viewMode === 'weekly' && (
+                        <View style={styles.weekGrid}>
+                            {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((day, index) => (
+                                <View key={index} style={styles.dayColumn}>
+                                    <Text style={styles.dayLabel}>{day}</Text>
+                                    <Ionicons name="ellipse-outline" size={24} color={COLORS.textSecondary} />
+                                </View>
+                            ))}
+                        </View>
+                    )}
 
-                    {/* Mock Calendar Grid */}
-                    <View style={styles.calendarGrid}>
-                        {/* Just a visual representation based on the image */}
-                        <View style={styles.calendarRow}>
-                            <Text style={styles.emptyDay}></Text><Text style={styles.emptyDay}></Text><Text style={styles.emptyDay}></Text><Text style={styles.emptyDay}></Text><Text style={styles.emptyDay}></Text><Text style={styles.dayText}>1</Text><Text style={styles.dayText}>2</Text>
+                    {viewMode === 'monthly' && (
+                        <View style={styles.calendarContainer}>
+                            <Text style={styles.monthTitle}>
+                                {['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'][new Date().getMonth()]} {new Date().getFullYear()}
+                            </Text>
+                            <View style={styles.calendarGrid}>
+                                {Array.from({ length: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() }, (_, i) => i + 1).map(day => (
+                                    <View key={day} style={[styles.calendarDay, day === new Date().getDate() && styles.currentDay]}>
+                                        <Text style={styles.calendarDayText}>{day}</Text>
+                                    </View>
+                                ))}
+                            </View>
                         </View>
-                        <View style={styles.calendarRow}>
-                            <View style={styles.dayCircle}><Text style={styles.dayText}>3</Text></View>
-                            <View style={[styles.dayCircle, styles.completedDay]}><Text style={styles.dayText}>4</Text></View>
-                            <View style={[styles.dayCircle, styles.completedDay]}><Text style={styles.dayText}>5</Text></View>
-                            <View style={[styles.dayCircle, styles.completedDay]}><Text style={styles.dayText}>6</Text></View>
-                            <View style={[styles.dayCircle, styles.completedDay]}><Text style={styles.dayText}>7</Text></View>
-                            <View style={[styles.dayCircle, styles.completedDay]}><Text style={styles.dayText}>8</Text></View>
-                            <View style={[styles.dayCircle, styles.completedDay]}><Text style={styles.dayText}>9</Text></View>
+                    )}
+
+                    {viewMode === 'yearly' && (
+                        <View style={styles.heatmapContainer}>
+                            {Array.from({ length: 12 }, (_, monthIndex) => {
+                                const daysInMonth = new Date(new Date().getFullYear(), monthIndex + 1, 0).getDate();
+                                return (
+                                    <View key={monthIndex} style={styles.monthRow}>
+                                        <Text style={styles.monthLabel}>
+                                            {['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'][monthIndex]}
+                                        </Text>
+                                        <View style={styles.heatmapGrid}>
+                                            {Array.from({ length: daysInMonth }, (_, dayIndex) => (
+                                                <View key={dayIndex} style={[styles.heatmapCell, { backgroundColor: '#444' }]} />
+                                            ))}
+                                        </View>
+                                    </View>
+                                );
+                            })}
                         </View>
-                        {/* ... more rows */}
-                    </View>
+                    )}
                 </View>
 
                 <View style={styles.statsRow}>
@@ -185,64 +239,103 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginLeft: 8,
     },
-    calendarCard: {
+    viewSelector: {
+        flexDirection: 'row',
         backgroundColor: '#333',
+        borderRadius: 12,
+        padding: 4,
+        marginBottom: 20,
+        width: '100%',
+    },
+    viewOption: {
+        flex: 1,
+        paddingVertical: 8,
+        alignItems: 'center',
+        borderRadius: 8,
+    },
+    activeViewOption: {
+        backgroundColor: COLORS.background,
+    },
+    viewOptionText: {
+        color: COLORS.textSecondary,
+        fontWeight: '600',
+    },
+    activeViewOptionText: {
+        color: COLORS.text,
+        fontWeight: 'bold',
+    },
+    weekGrid: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    dayColumn: {
+        alignItems: 'center',
+    },
+    dayLabel: {
+        color: COLORS.textSecondary,
+        fontSize: 12,
+        marginBottom: 4,
+    },
+    calendarContainer: {
+        padding: 0, // Removed padding as card has it
+    },
+    monthTitle: {
+        color: COLORS.text,
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    calendarGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'flex-start',
+    },
+    calendarDay: {
+        width: '14.28%',
+        aspectRatio: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    currentDay: {
+        backgroundColor: COLORS.primary,
+        borderRadius: 20,
+    },
+    calendarDayText: {
+        color: COLORS.text,
+    },
+    heatmapContainer: {
+        padding: 0,
+    },
+    monthRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    monthLabel: {
+        color: COLORS.textSecondary,
+        width: 30,
+        fontSize: 10,
+    },
+    heatmapGrid: {
+        flex: 1,
+        flexDirection: 'row',
+        gap: 2,
+    },
+    heatmapCell: {
+        width: 6,
+        height: 6,
+        borderRadius: 1,
+    },
+    calendarCard: {
+        backgroundColor: COLORS.cardBackground,
         borderRadius: 16,
         padding: 20,
         width: '100%',
         marginBottom: 20,
     },
-    calendarHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 10,
-    },
-    monthText: {
-        color: COLORS.text,
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    yearText: {
-        color: COLORS.text,
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    daysHeader: {
-        color: COLORS.textSecondary,
-        fontSize: 14,
-        fontFamily: 'monospace', // To align somewhat
-        marginBottom: 10,
-        textAlign: 'center', // Simplified
-    },
-    calendarGrid: {
-        alignItems: 'center',
-    },
-    calendarRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
-        marginBottom: 8,
-    },
-    dayText: {
-        color: COLORS.text,
-        width: 30,
-        textAlign: 'center',
-    },
-    emptyDay: {
-        width: 30,
-    },
-    dayCircle: {
-        width: 30,
-        height: 30,
-        borderRadius: 15,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: COLORS.success,
-    },
-    completedDay: {
-        backgroundColor: 'rgba(76, 175, 80, 0.3)', // Transparent green
-    },
+
     statsRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
