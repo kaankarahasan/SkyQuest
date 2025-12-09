@@ -311,7 +311,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
         const showBorder = !completed || (completed && item.focusHabitEnabled);
 
         return (
-            <FlashingView active={item.reminderEnabled} style={[styles.card, { borderColor: showBorder ? item.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
+            <FlashingView active={item.reminderEnabled && !completed} style={[styles.card, { borderColor: showBorder ? item.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
                 <GlowOverlay active={completed} color={item.color} />
                 <View style={styles.iconContainer}>
                     <Text style={{ fontSize: 24 }}>{item.icon}</Text>
@@ -376,7 +376,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                 const isDayAllowed = habit.selectedDays && habit.selectedDays.includes(currentDayIndex);
 
                 return (
-                    <FlashingView key={habit.id} active={habit.reminderEnabled} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
+                    <FlashingView key={habit.id} active={habit.reminderEnabled && !completed} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
                         <GlowOverlay active={completed} color={habit.color} />
                         <View style={styles.habitHeader}>
                             <View style={styles.iconContainer}>
