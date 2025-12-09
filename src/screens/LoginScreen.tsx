@@ -13,7 +13,7 @@ import { CustomInput } from '../components/CustomInput';
 import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
 
-export const LoginScreen = ({ navigation }: any) => {
+export const LoginScreen = ({ navigation, route }: any) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
@@ -21,6 +21,14 @@ export const LoginScreen = ({ navigation }: any) => {
 
     useEffect(() => {
         const loadCredentials = async () => {
+            // Check for params from Register screen first
+            if (route.params?.email && route.params?.password) {
+                setEmail(route.params.email);
+                setPassword(route.params.password);
+                setRememberMe(true); // Assuming they wanted to be remembered if they came from Register with it checked
+                return;
+            }
+
             try {
                 const savedEmail = await AsyncStorage.getItem('email');
                 const savedPassword = await AsyncStorage.getItem('password');
@@ -34,7 +42,7 @@ export const LoginScreen = ({ navigation }: any) => {
             }
         };
         loadCredentials();
-    }, []);
+    }, [route.params]);
 
     const handleLogin = async () => {
         if (!email) {

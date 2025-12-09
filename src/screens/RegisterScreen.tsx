@@ -33,7 +33,10 @@ export const RegisterScreen = ({ navigation }: any) => {
             });
 
             Alert.alert('Başarılı', 'Hesabınız oluşturuldu. Lütfen giriş yapınız.', [
-                { text: 'Tamam', onPress: () => navigation.navigate('Login') }
+                {
+                    text: 'Tamam',
+                    onPress: () => navigation.navigate('Login', rememberMe ? { email, password } : undefined)
+                }
             ]);
         } catch (error: any) {
             let errorMessage = 'Kayıt işlemi sırasında bir hata oluştu.';
