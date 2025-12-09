@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { auth, db } from '../../firebaseConfig';
 import { ProfilePhotoSelectionModal } from '../components/ProfilePhotoSelectionModal';
 import { COLORS } from '../constants/colors';
+import { FONTS } from '../constants/fonts';
 import { BADGES } from '../constants/gamification';
 import { getAvatarSource } from '../utils/avatarUtils';
 
@@ -161,6 +162,7 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         fontSize: 20,
         fontWeight: 'bold',
+        fontFamily: FONTS.bold,
     },
     scrollContent: {
         padding: 20,
@@ -182,18 +184,20 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         borderRadius: 8,
     },
+    formSection: {
+        marginBottom: 30,
+    },
     changePhotoText: {
         color: COLORS.text,
         fontWeight: 'bold',
-    },
-    formSection: {
-        marginBottom: 30,
+        fontFamily: FONTS.bold,
     },
     label: {
         color: COLORS.text,
         fontSize: 16,
         fontWeight: 'bold',
         marginBottom: 8,
+        fontFamily: FONTS.bold,
     },
     input: {
         backgroundColor: '#333',
@@ -202,6 +206,7 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         marginBottom: 16,
         fontSize: 16,
+        fontFamily: FONTS.regular,
     },
     sectionTitle: {
         color: COLORS.text,
@@ -209,6 +214,26 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 16,
         marginTop: 10,
+        fontFamily: FONTS.bold,
+    },
+    badgeTitle: {
+        color: COLORS.text,
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 4,
+        fontFamily: FONTS.bold,
+    },
+    badgeDescription: {
+        color: COLORS.textSecondary,
+        fontSize: 14,
+        lineHeight: 20,
+        fontFamily: FONTS.regular,
+    },
+    saveButtonText: {
+        color: COLORS.text,
+        fontSize: 18,
+        fontWeight: 'bold',
+        fontFamily: FONTS.bold,
     },
     badgeCard: {
         flexDirection: 'row',
@@ -218,7 +243,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         alignItems: 'center',
     },
-    emptyBadgeCard: { // Renamed from old badgeCard to prevent conflict logic
+    emptyBadgeCard: {
         backgroundColor: '#333',
         borderRadius: 12,
         padding: 16,
@@ -247,28 +272,12 @@ const styles = StyleSheet.create({
     infoContainer: {
         flex: 1,
     },
-    badgeTitle: {
-        color: COLORS.text,
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 4,
-    },
-    badgeDescription: {
-        color: COLORS.textSecondary,
-        fontSize: 14,
-        lineHeight: 20,
-    },
     saveButton: {
         backgroundColor: '#556B2F', // Olive Green
         paddingVertical: 16,
         borderRadius: 12,
         alignItems: 'center',
         marginTop: 20,
-    },
-    saveButtonText: {
-        color: COLORS.text,
-        fontSize: 18,
-        fontWeight: 'bold',
     },
     badgesList: {
         marginBottom: 30,

@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { auth, db } from '../../firebaseConfig';
 import { AddHabitModal } from '../components/AddHabitModal';
 import { COLORS } from '../constants/colors';
+import { FONTS } from '../constants/fonts';
 
 // Mock Data
 // Mock Data removed
@@ -27,6 +28,9 @@ export const HabitsListScreen = ({ navigation }: any) => {
                         habitsData.push({ id: doc.id, ...doc.data() });
                     });
                     setHabits(habitsData);
+                    setLoading(false);
+                }, (error) => {
+                    console.error("HabitsListScreen snapshot error:", error);
                     setLoading(false);
                 });
                 return () => unsubscribeSnapshot();
@@ -116,6 +120,7 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         fontSize: 18,
         fontWeight: 'bold',
+        fontFamily: FONTS.bold,
     },
     listContent: {
         padding: 16,
@@ -139,10 +144,12 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
         marginBottom: 4,
+        fontFamily: FONTS.bold,
     },
     streak: {
         color: COLORS.textSecondary,
         fontSize: 12,
+        fontFamily: FONTS.regular,
     },
     emptyContainer: {
         alignItems: 'center',
@@ -153,5 +160,6 @@ const styles = StyleSheet.create({
         color: COLORS.textSecondary,
         fontSize: 16,
         textAlign: 'center',
+        fontFamily: FONTS.regular,
     },
 });

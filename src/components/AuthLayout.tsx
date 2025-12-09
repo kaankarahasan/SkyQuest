@@ -3,6 +3,7 @@ import React from 'react';
 import { Image, ImageBackground, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../constants/colors';
+import { FONTS } from '../constants/fonts';
 
 interface AuthLayoutProps {
     children: React.ReactNode;
@@ -120,15 +121,17 @@ const styles = StyleSheet.create({
         marginBottom: 40,
     },
     appTitle: {
-        fontSize: 40,
+        fontSize: 64,
         fontWeight: 'bold',
-        color: COLORS.black,
-        marginBottom: 10,
+        color: '#000000',
+        marginBottom: 8,
+        textAlign: 'center',
+        fontFamily: FONTS.headingBold,
         letterSpacing: 2,
     },
     logo: {
-        width: 80,
-        height: 80,
+        width: 120,
+        height: 120,
         marginBottom: 20,
     },
     card: {
@@ -143,6 +146,7 @@ const styles = StyleSheet.create({
         color: COLORS.white,
         marginBottom: 20,
         textAlign: 'center',
+        fontFamily: FONTS.bold,
     },
     backIcon: {
         marginBottom: 10,

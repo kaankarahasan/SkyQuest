@@ -10,6 +10,7 @@ import { AuthLayout } from '../components/AuthLayout';
 import { CustomButton } from '../components/CustomButton';
 import { CustomInput } from '../components/CustomInput';
 import { COLORS } from '../constants/colors';
+import { FONTS } from '../constants/fonts';
 
 export const LoginScreen = ({ navigation }: any) => {
     const [email, setEmail] = useState('');
@@ -124,7 +125,42 @@ const styles = StyleSheet.create({
         fontSize: 12,
     },
     forgotPasswordText: {
-        color: COLORS.white,
-        fontSize: 12,
+        color: COLORS.textSecondary,
+        textAlign: 'right',
+        fontSize: 14,
+        fontFamily: FONTS.regular,
+    },
+    separatorContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 20,
+    },
+    separatorLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: COLORS.textSecondary,
+        opacity: 0.5,
+    },
+    separatorText: {
+        color: COLORS.textSecondary,
+        marginHorizontal: 10,
+        fontSize: 14,
+        fontFamily: FONTS.regular,
+    },
+    registerContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginTop: 20,
+    },
+    registerText: {
+        color: COLORS.textSecondary,
+        fontSize: 14,
+        fontFamily: FONTS.regular,
+    },
+    registerLink: {
+        color: COLORS.primary,
+        fontWeight: 'bold',
+        fontSize: 14,
+        fontFamily: FONTS.bold,
     },
 });

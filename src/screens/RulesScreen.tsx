@@ -3,6 +3,7 @@ import React from 'react';
 import { ImageBackground, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../constants/colors';
+import { FONTS } from '../constants/fonts';
 
 export const RulesScreen = ({ navigation }: any) => {
     return (
@@ -75,10 +76,12 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
     },
     headerTitle: {
-        color: COLORS.text,
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: 'bold',
-        fontFamily: 'System',
+        color: COLORS.text,
+        textAlign: 'center',
+        flex: 1,
+        fontFamily: FONTS.bold,
     },
     content: {
         padding: 24,
@@ -98,6 +101,6 @@ const styles = StyleSheet.create({
         fontSize: 18,
         lineHeight: 26,
         flex: 1,
-        fontFamily: 'System', // Pixel font would be ideal here
+        fontFamily: FONTS.regular,
     },
 });

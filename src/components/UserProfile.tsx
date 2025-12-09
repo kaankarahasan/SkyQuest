@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
+import { FONTS } from '../constants/fonts';
 import { BADGES } from '../constants/gamification';
 import { getAvatarSource } from '../utils/avatarUtils';
 import { calculateLevel } from '../utils/gamificationUtils';
@@ -137,24 +138,28 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginLeft: 12,
     },
-    separator: {
-        color: COLORS.textSecondary,
-        marginHorizontal: 8,
-        fontSize: 12,
-    },
     name: {
         color: COLORS.text,
         fontSize: 18,
         fontWeight: 'bold',
+        fontFamily: FONTS.bold,
     },
     levelInfo: {
         color: COLORS.primary,
         fontSize: 14,
         fontWeight: 'bold',
+        fontFamily: FONTS.bold,
     },
     xpText: {
         color: COLORS.textSecondary,
         fontSize: 14,
+        fontFamily: FONTS.regular,
+    },
+    separator: {
+        color: COLORS.textSecondary,
+        marginHorizontal: 8,
+        fontSize: 12,
+        fontFamily: FONTS.regular,
     },
     progressBarBackground: {
         height: 8,

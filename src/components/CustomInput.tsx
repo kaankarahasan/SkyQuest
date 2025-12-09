@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, TextInputProps, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../constants/colors';
+import { FONTS } from '../constants/fonts';
 
 // GÜNCELLENMİŞ CustomInputProps arayüzü
 // TextInputProps'u genişleterek keyboardType, autoCapitalize vb. özellikleri içerir.
@@ -83,6 +84,8 @@ const styles = StyleSheet.create({
         flex: 1,
         color: COLORS.text,
         fontSize: 16,
+        paddingVertical: 8,
+        fontFamily: FONTS.regular,
     },
     icon: {
         marginLeft: 10,

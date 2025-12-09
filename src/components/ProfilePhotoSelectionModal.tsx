@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Alert, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
+import { FONTS } from '../constants/fonts';
 import { AVATARS } from '../utils/avatarUtils';
 
 interface ProfilePhotoSelectionModalProps {
@@ -163,6 +164,7 @@ const styles = StyleSheet.create({
         color: COLORS.error,
         fontSize: 16,
         fontWeight: 'bold',
+        fontFamily: FONTS.bold,
     },
     header: {
         flexDirection: 'row',
@@ -174,6 +176,7 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         fontSize: 18,
         fontWeight: 'bold',
+        fontFamily: FONTS.bold,
     },
     saveButton: {
         color: '#FFFFFF',
@@ -184,6 +187,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         fontWeight: 'bold',
         fontSize: 16,
+        fontFamily: FONTS.bold,
     },
     gridContainer: {
         flexDirection: 'row',

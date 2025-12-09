@@ -7,6 +7,7 @@ import { HabitList } from '../components/HabitList';
 import { TabSwitcher } from '../components/TabSwitcher';
 import { UserProfile } from '../components/UserProfile';
 import { COLORS } from '../constants/colors';
+import { FONTS } from '../constants/fonts';
 
 export const MainScreen = ({ navigation }: any) => {
     const [activeTab, setActiveTab] = useState<'Daily' | 'Weekly' | 'Monthly' | 'Yearly'>('Daily');
@@ -59,7 +60,7 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
         marginRight: 8,
-        fontFamily: 'System', // Replace with custom font if available
+        fontFamily: FONTS.headingBold,
     },
     content: {
         flex: 1,

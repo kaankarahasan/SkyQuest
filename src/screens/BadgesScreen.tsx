@@ -5,6 +5,7 @@ import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { auth, db } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
+import { FONTS } from '../constants/fonts';
 import { BADGES } from '../constants/gamification';
 
 export const BadgesScreen = ({ navigation }: any) => {
@@ -87,6 +88,7 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         fontSize: 20,
         fontWeight: 'bold',
+        fontFamily: FONTS.headingBold,
     },
     listContent: {
         padding: 16,
@@ -131,13 +133,16 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 4,
+        fontFamily: FONTS.bold,
     },
     description: {
         color: COLORS.textSecondary,
         fontSize: 14,
         lineHeight: 20,
+        fontFamily: FONTS.regular,
     },
     lockedText: {
         color: '#666',
+        fontFamily: FONTS.regular,
     },
 });

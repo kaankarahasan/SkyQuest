@@ -7,6 +7,7 @@ import { AuthLayout } from '../components/AuthLayout';
 import { CustomButton } from '../components/CustomButton';
 import { CustomInput } from '../components/CustomInput';
 import { COLORS } from '../constants/colors';
+import { FONTS } from '../constants/fonts';
 
 export const RegisterScreen = ({ navigation }: any) => {
     const [fullName, setFullName] = useState('');
@@ -115,5 +116,21 @@ const styles = StyleSheet.create({
         color: COLORS.white,
         marginLeft: 5,
         fontSize: 12,
+    },
+    loginContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginTop: 20,
+    },
+    loginText: {
+        color: COLORS.textSecondary,
+        fontSize: 14,
+        fontFamily: FONTS.regular,
+    },
+    loginLink: {
+        color: COLORS.primary,
+        fontWeight: 'bold',
+        fontSize: 14,
+        fontFamily: FONTS.bold,
     },
 });

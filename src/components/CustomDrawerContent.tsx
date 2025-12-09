@@ -5,6 +5,7 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
+import { FONTS } from '../constants/fonts';
 
 export const CustomDrawerContent = (props: any) => {
     const handleLogout = async () => {
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         fontSize: 20,
         fontWeight: 'bold',
-        fontFamily: 'System',
+        fontFamily: FONTS.bold,
     },
     menuItems: {
         paddingHorizontal: 16,
@@ -116,6 +117,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         marginLeft: 12,
+        fontFamily: FONTS.bold,
     },
     footer: {
         padding: 20,
@@ -131,5 +133,6 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         fontSize: 18,
         fontWeight: 'bold',
+        fontFamily: FONTS.bold,
     },
 });

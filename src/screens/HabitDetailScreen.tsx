@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { db } from '../../firebaseConfig';
 import { AddHabitModal } from '../components/AddHabitModal';
 import { COLORS } from '../constants/colors';
+import { FONTS } from '../constants/fonts';
 import { Habit } from '../types';
 import { calculateStreak, isCompleted } from '../utils/habitUtils';
 
@@ -270,17 +271,20 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 8,
         textAlign: 'center',
+        fontFamily: FONTS.bold,
     },
     description: {
         color: COLORS.textSecondary,
         fontSize: 14,
         marginBottom: 12,
         textAlign: 'center',
+        fontFamily: FONTS.regular,
     },
     category: {
         color: COLORS.text,
         fontSize: 18,
         marginBottom: 20,
+        fontFamily: FONTS.regular,
     },
     refreshSection: {
         flexDirection: 'row',
@@ -292,6 +296,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         marginLeft: 8,
+        fontFamily: FONTS.bold,
     },
     viewSelector: {
         flexDirection: 'row',
@@ -313,10 +318,12 @@ const styles = StyleSheet.create({
     viewOptionText: {
         color: COLORS.textSecondary,
         fontWeight: '600',
+        fontFamily: FONTS.regular,
     },
     activeViewOptionText: {
         color: COLORS.text,
         fontWeight: 'bold',
+        fontFamily: FONTS.bold,
     },
     weekGrid: {
         flexDirection: 'row',
@@ -329,9 +336,10 @@ const styles = StyleSheet.create({
         color: COLORS.textSecondary,
         fontSize: 12,
         marginBottom: 4,
+        fontFamily: FONTS.regular,
     },
     calendarContainer: {
-        padding: 0, // Removed padding as card has it
+        padding: 0,
     },
     monthTitle: {
         color: COLORS.text,
@@ -339,6 +347,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 12,
         textAlign: 'center',
+        fontFamily: FONTS.bold,
     },
     calendarGrid: {
         flexDirection: 'row',
@@ -357,11 +366,11 @@ const styles = StyleSheet.create({
         borderRadius: 20,
     },
     completedDay: {
-        // backgroundColor: 'rgba(76, 175, 80, 0.2)', // Optional: light green background
-        // borderRadius: 20,
+        // backgroundColor: 'rgba(76, 175, 80, 0.2)', // Optional
     },
     calendarDayText: {
         color: COLORS.text,
+        fontFamily: FONTS.regular,
     },
     dot: {
         width: 4,
@@ -382,6 +391,7 @@ const styles = StyleSheet.create({
         color: COLORS.textSecondary,
         width: 30,
         fontSize: 10,
+        fontFamily: FONTS.regular,
     },
     heatmapGrid: {
         flex: 1,
@@ -400,7 +410,6 @@ const styles = StyleSheet.create({
         width: '100%',
         marginBottom: 20,
     },
-
     statsRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -421,11 +430,13 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
         marginTop: 4,
+        fontFamily: FONTS.bold,
     },
     statLabel: {
         color: COLORS.textSecondary,
         fontSize: 12,
         marginTop: 2,
         textAlign: 'center',
+        fontFamily: FONTS.regular,
     },
 });

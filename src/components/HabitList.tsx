@@ -4,6 +4,7 @@ import React from 'react';
 import { Alert, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
+import { FONTS } from '../constants/fonts';
 import { Habit, RepeatType, User } from '../types';
 import { calculateLevel, checkBadges } from '../utils/gamificationUtils';
 import { calculateStreak, getCompletionKey, isCompleted } from '../utils/habitUtils';
@@ -40,6 +41,9 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                         });
                     });
                     setHabits(habitsData);
+                    setLoading(false);
+                }, (error) => {
+                    console.error("HabitList snapshot error:", error);
                     setLoading(false);
                 });
                 return () => unsubscribeSnapshot();
@@ -152,8 +156,9 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                     <Text style={{ fontSize: 24 }}>{item.icon}</Text>
                 </View>
                 <View style={styles.infoContainer}>
-                    <Text style={styles.title}>{item.title}</Text>
-                    <Text style={styles.streak}>🔥 {item.streak} {item.repeatType === 'Daily' ? 'Gün' : item.repeatType === 'Weekly' ? 'Hafta' : item.repeatType === 'Monthly' ? 'Ay' : 'Yıl'}</Text>
+                    <Text style={[styles.habitTitle, completed && styles.completedText]}>{item.title}</Text>
+                    <Text style={styles.habitDescription}>{item.description}</Text>
+                    <Text style={styles.streakText}>🔥 {item.streak} {item.repeatType === 'Daily' ? 'Gün' : item.repeatType === 'Weekly' ? 'Hafta' : item.repeatType === 'Monthly' ? 'Ay' : 'Yıl'}</Text>
                 </View>
                 <TouchableOpacity style={styles.checkbox} onPress={() => toggleHabitCompletion(item)}>
                     {completed ? (
@@ -195,8 +200,8 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                             <Text style={{ fontSize: 24 }}>{habit.icon}</Text>
                         </View>
                         <View style={styles.infoContainer}>
-                            <Text style={styles.title}>{habit.title}</Text>
-                            <Text style={styles.streak}>🔥 {habit.streak} Hafta</Text>
+                            <Text style={[styles.habitTitle, isCompleted(habit.completedDates, habit.repeatType) && styles.completedText]}>{habit.title}</Text>
+                            <Text style={styles.streakText}>🔥 {habit.streak} Hafta</Text>
                         </View>
                         <TouchableOpacity style={styles.checkbox} onPress={() => toggleHabitCompletion(habit)}>
                             {isCompleted(habit.completedDates, habit.repeatType) ? (
@@ -236,8 +241,8 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                                 <Text style={{ fontSize: 24 }}>{habit.icon}</Text>
                             </View>
                             <View style={styles.infoContainer}>
-                                <Text style={styles.title}>{habit.title}</Text>
-                                <Text style={styles.streak}>🔥 {habit.streak} Ay</Text>
+                                <Text style={[styles.habitTitle, isCompleted(habit.completedDates, habit.repeatType) && styles.completedText]}>{habit.title}</Text>
+                                <Text style={styles.streakText}>🔥 {habit.streak} Ay</Text>
                             </View>
                             <TouchableOpacity style={styles.checkbox} onPress={() => toggleHabitCompletion(habit)}>
                                 {isCompleted(habit.completedDates, habit.repeatType) ? (
@@ -277,8 +282,8 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                                 <Text style={{ fontSize: 24 }}>{habit.icon}</Text>
                             </View>
                             <View style={styles.infoContainer}>
-                                <Text style={styles.title}>{habit.title}</Text>
-                                <Text style={styles.streak}>🔥 {habit.streak} Yıl</Text>
+                                <Text style={[styles.habitTitle, isCompleted(habit.completedDates, habit.repeatType) && styles.completedText]}>{habit.title}</Text>
+                                <Text style={styles.streakText}>🔥 {habit.streak} Yıl</Text>
                             </View>
                             <TouchableOpacity style={styles.checkbox} onPress={() => toggleHabitCompletion(habit)}>
                                 {isCompleted(habit.completedDates, habit.repeatType) ? (
@@ -345,15 +350,29 @@ const styles = StyleSheet.create({
     infoContainer: {
         flex: 1,
     },
-    title: {
+    habitTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
         color: COLORS.text,
-        fontSize: 16,
-        fontWeight: '600',
         marginBottom: 4,
+        fontFamily: FONTS.bold,
     },
-    streak: {
+    habitDescription: {
+        fontSize: 14,
         color: COLORS.textSecondary,
-        fontSize: 12,
+        marginBottom: 8,
+        fontFamily: FONTS.regular,
+    },
+    streakText: {
+        color: COLORS.gold,
+        fontWeight: 'bold',
+        fontSize: 14,
+        marginLeft: 4,
+        fontFamily: FONTS.bold,
+    },
+    completedText: {
+        color: COLORS.textSecondary,
+        textDecorationLine: 'line-through',
     },
     checkbox: {
         marginLeft: 12,
@@ -367,6 +386,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 16,
+        fontFamily: FONTS.bold,
     },
     weeklyCard: {
         backgroundColor: COLORS.cardBackground,
@@ -378,6 +398,7 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         fontSize: 16,
         marginBottom: 12,
+        fontFamily: FONTS.bold,
     },
     weekGrid: {
         flexDirection: 'row',

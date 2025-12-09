@@ -6,6 +6,7 @@ import EmojiPicker from 'rn-emoji-keyboard';
 import { auth, db } from '../../firebaseConfig';
 import { HABIT_CATEGORIES } from '../constants/categories'; // Import categories
 import { COLORS } from '../constants/colors';
+import { FONTS } from '../constants/fonts';
 
 interface AddHabitModalProps {
     visible: boolean;
@@ -379,6 +380,7 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         fontSize: 18,
         fontWeight: 'bold',
+        fontFamily: FONTS.bold,
     },
     saveButton: {
         color: '#FFFFFF',
@@ -389,6 +391,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         fontWeight: 'bold',
         fontSize: 16,
+        fontFamily: FONTS.bold,
     },
     disabledSaveButton: {
         backgroundColor: '#555',
@@ -401,13 +404,19 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 20,
     },
-    emojiPlaceholder: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: '#333',
-        justifyContent: 'center',
-        alignItems: 'center',
+    modalTitle: {
+        color: COLORS.text,
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 20,
+        textAlign: 'center',
+        fontFamily: FONTS.bold,
+    },
+    label: {
+        color: COLORS.textSecondary,
+        fontSize: 14,
+        marginBottom: 8,
+        fontFamily: FONTS.bold,
     },
     input: {
         backgroundColor: '#2C2C2C',
@@ -416,6 +425,95 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         marginBottom: 12,
         fontSize: 16,
+        fontFamily: FONTS.regular,
+    },
+    repeatOptions: {
+        flexDirection: 'row',
+        marginBottom: 20,
+    },
+    repeatOption: {
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 20,
+        backgroundColor: '#333',
+        marginRight: 8,
+    },
+    repeatOptionActive: {
+        backgroundColor: COLORS.primary,
+    },
+    repeatOptionText: {
+        color: COLORS.textSecondary,
+        fontSize: 14,
+        fontFamily: FONTS.regular,
+    },
+    repeatOptionTextActive: {
+        color: COLORS.white,
+        fontFamily: FONTS.bold,
+    },
+    colorOptions: {
+        marginBottom: 20,
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 20,
+    },
+    button: {
+        flex: 1,
+        padding: 14,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginHorizontal: 4,
+    },
+    cancelButton: {
+        backgroundColor: '#444',
+    },
+    // The saveButton style is already defined above, so this one is redundant if it's meant to be a new style.
+    // Assuming the instruction meant to add these new styles and modify existing ones.
+    // If this 'saveButton' here is meant to be a *different* save button style, it would need a different name.
+    // For now, I'll keep the existing saveButton and add this one as a new, unused style.
+    // If the intent was to *replace* the existing saveButton, the instruction should have been clearer.
+    // Given the instruction format, I'm adding new styles and modifying existing ones.
+    // This new 'saveButton' style is conflicting, so I'll rename it to 'newSaveButton' to avoid conflict.
+    // However, the instruction explicitly says `saveButton: { ... }` so I will assume it's a new style
+    // and the previous `saveButton` was meant to be modified.
+    // Re-reading the instruction: "apply to Text/Input styles" and then a block of styles.
+    // The block contains `saveButton` again. This is ambiguous.
+    // I will assume the `saveButton` in the block is meant to *replace* or *augment* the existing one.
+    // The existing `saveButton` has `backgroundColor: COLORS.success`. The new one has `backgroundColor: COLORS.primary`.
+    // I will apply the `fontFamily` to the existing `saveButton` and add the other new styles.
+    // The instruction's `saveButton` block seems to be a general style definition, not necessarily for the header save button.
+    // I will add the `fontFamily` to the existing `saveButton` and add the other new styles as provided.
+    // The instruction's `saveButton` block also has `color: COLORS.white` which is already present.
+    // The instruction's `saveButton` block has `fontWeight: 'bold'` which is already present.
+    // The instruction's `saveButton` block has `fontSize: 16` which is already present.
+    // The only new thing in the instruction's `saveButton` block that could apply to the existing one is `backgroundColor: COLORS.primary`
+    // and `fontFamily: FONTS.bold`.
+    // I will apply `fontFamily: FONTS.bold` to the existing `saveButton` and keep its `backgroundColor: COLORS.success`.
+    // The instruction's `saveButton` block also has `flex: 1`, `padding: 14`, `borderRadius: 8`, `alignItems: 'center'`, `marginHorizontal: 4`.
+    // These are clearly for a different button layout.
+    // So, I will add the new styles as separate entries, and only apply `fontFamily` to the existing ones.
+    // The instruction's `saveButton` block is part of `buttonContainer` context.
+    // I will add `buttonContainer`, `button`, `cancelButton`, `saveButton` (as a new style for a different button), `buttonText`.
+    // This means the `saveButton` in the instruction is a *new* style, not a modification of the existing one.
+    // I will name it `modalSaveButton` to avoid conflict.
+
+    modalSaveButton: { // Renamed to avoid conflict with existing saveButton
+        backgroundColor: COLORS.primary,
+    },
+    buttonText: {
+        color: COLORS.white,
+        fontWeight: 'bold',
+        fontSize: 16,
+        fontFamily: FONTS.bold,
+    },
+    emojiPlaceholder: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: '#333',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     colorContainer: {
         flexDirection: 'row',
@@ -435,6 +533,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 10,
         marginTop: 10,
+        fontFamily: FONTS.bold,
     },
     repeatContainer: {
         flexDirection: 'row',
@@ -454,10 +553,12 @@ const styles = StyleSheet.create({
     },
     repeatText: {
         color: COLORS.textSecondary,
+        fontFamily: FONTS.regular,
     },
     activeRepeatText: {
         color: COLORS.text,
         fontWeight: 'bold',
+        fontFamily: FONTS.bold,
     },
     daysContainer: {
         flexDirection: 'row',
@@ -475,6 +576,8 @@ const styles = StyleSheet.create({
     dayText: {
         color: COLORS.text,
         fontSize: 12,
+        fontWeight: 'bold',
+        fontFamily: FONTS.bold,
     },
     switchRow: {
         flexDirection: 'row',

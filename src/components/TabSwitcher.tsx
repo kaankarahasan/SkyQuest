@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../constants/colors';
+import { FONTS } from '../constants/fonts';
 
 type TabType = 'Daily' | 'Weekly' | 'Monthly' | 'Yearly';
 
@@ -63,10 +64,13 @@ const styles = StyleSheet.create({
     },
     tabText: {
         color: COLORS.textSecondary,
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: '600',
+        fontFamily: FONTS.regular,
     },
     activeTabText: {
         color: COLORS.text,
+        fontWeight: 'bold',
+        fontFamily: FONTS.bold,
     },
 });

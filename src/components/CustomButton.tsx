@@ -1,6 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { COLORS } from '../constants/colors';
+import { FONTS } from '../constants/fonts';
 
 export interface CustomButtonProps {
     title: string;
@@ -52,8 +53,9 @@ const styles = StyleSheet.create({
         opacity: 0.6, // Devre dışı bırakıldığında şeffaflığı azalt
     },
     text: {
-        color: COLORS.white,
+        color: COLORS.buttonText,
         fontSize: 16,
         fontWeight: 'bold',
+        fontFamily: FONTS.bold,
     },
 });
