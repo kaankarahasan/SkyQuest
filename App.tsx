@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { TimeProvider } from './src/context/TimeContext';
 import { AuthNavigator } from './src/navigation/AuthNavigator';
 
 export default function App() {
@@ -25,10 +26,12 @@ export default function App() {
 
     return (
         <SafeAreaProvider>
-            <NavigationContainer>
-                <StatusBar style="light" />
-                <AuthNavigator />
-            </NavigationContainer>
+            <TimeProvider>
+                <NavigationContainer>
+                    <StatusBar style="light" />
+                    <AuthNavigator />
+                </NavigationContainer>
+            </TimeProvider>
         </SafeAreaProvider>
     );
 }

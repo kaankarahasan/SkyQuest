@@ -5,6 +5,7 @@ import { Alert, Animated, FlatList, ScrollView, StyleSheet, Text, TouchableOpaci
 import { auth, db } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
+import { useTime } from '../context/TimeContext';
 import { Habit, RepeatType, User } from '../types';
 import { calculateLevel, checkBadges } from '../utils/gamificationUtils';
 import { calculateStreak, getCompletionKey, isCompleted } from '../utils/habitUtils';
@@ -78,6 +79,7 @@ const FlashingView = ({ children, active, style }: { children: React.ReactNode, 
 };
 
 export const HabitList = ({ activeTab }: HabitListProps) => {
+    const { currentDate } = useTime();
     const [habits, setHabits] = React.useState<Habit[]>([]);
     const [loading, setLoading] = React.useState(true);
 
@@ -113,7 +115,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                     selectedDays: data.selectedDays,
                     createdAt: data.createdAt,
                     completedDates: data.completedDates || [],
-                    streak: calculateStreak(data.completedDates || [], data.repeatType),
+                    streak: calculateStreak(data.completedDates || [], data.repeatType, currentDate),
                     category: data.category,
                     focusHabitEnabled: data.focusHabitEnabled,
                     reminderEnabled: data.reminderEnabled,
@@ -126,7 +128,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
             setLoading(false);
         });
         return () => unsubscribeSnapshot();
-    }, [user]);
+    }, [user, currentDate]);
 
     React.useEffect(() => {
         if (!user || loading || habits.length === 0) return;
@@ -135,7 +137,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
             const habitsToReset: Habit[] = [];
 
             habits.forEach(habit => {
-                const currentStreak = calculateStreak(habit.completedDates || [], habit.repeatType);
+                const currentStreak = calculateStreak(habit.completedDates || [], habit.repeatType, currentDate);
                 // If calculated streak is 0 (broken) BUT stored streak was >= 3
                 // This implies we haven't processed the break yet
                 if (currentStreak === 0 && habit.streak >= 3) {
@@ -189,10 +191,10 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
         };
 
         checkStreakPenalties();
-    }, [habits, user, loading]);
+    }, [habits, user, loading, currentDate]);
 
     const toggleHabitCompletion = async (habit: Habit) => {
-        const today = new Date();
+        const today = currentDate;
         const key = getCompletionKey(today, habit.repeatType);
         const isAlreadyCompleted = isCompleted(habit.completedDates, habit.repeatType, today);
 
@@ -216,7 +218,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                             newCompletedDates.push(key);
                         }
 
-                        const newStreak = calculateStreak(newCompletedDates, habit.repeatType);
+                        const newStreak = calculateStreak(newCompletedDates, habit.repeatType, currentDate);
 
                         try {
                             // Update Habit
@@ -288,7 +290,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
     };
 
     const renderItem = ({ item }: { item: Habit }) => {
-        const completed = isCompleted(item.completedDates, item.repeatType);
+        const completed = isCompleted(item.completedDates, item.repeatType, currentDate);
         const showBorder = !completed || (completed && item.focusHabitEnabled);
 
         return (
@@ -316,8 +318,8 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
     const filteredHabits = habits
         .filter(habit => habit.repeatType === activeTab)
         .sort((a, b) => {
-            const aCompleted = isCompleted(a.completedDates, a.repeatType) ? 1 : 0;
-            const bCompleted = isCompleted(b.completedDates, b.repeatType) ? 1 : 0;
+            const aCompleted = isCompleted(a.completedDates, a.repeatType, currentDate) ? 1 : 0;
+            const bCompleted = isCompleted(b.completedDates, b.repeatType, currentDate) ? 1 : 0;
             return aCompleted - bCompleted;
         });
 
@@ -342,13 +344,13 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
     const renderWeeklyView = () => (
         <ScrollView style={styles.container} contentContainerStyle={styles.listContent}>
             {filteredHabits.length === 0 ? renderEmptyState() : filteredHabits.map(habit => {
-                const completed = isCompleted(habit.completedDates, habit.repeatType);
+                const completed = isCompleted(habit.completedDates, habit.repeatType, currentDate);
                 const showBorder = !completed || (completed && habit.focusHabitEnabled);
 
                 // Check if today is allowed for this habit
-                const today = new Date();
+                const today = currentDate;
                 const dayIndex = today.getDay() || 7; // 1-7 (Mon-Sun) but getDay returns 0-6 (Sun-Sat).
-                // Our selectedDays: 0=Mon, 6=Sun. 
+                // Our selectedDays: 0=Mon, 6=Sun.
                 // JS getDay(): 0=Sun, 1=Mon...6=Sat.
                 // Conversion: JS(1)=Mon(0). JS(0)=Sun(6).
                 const jsDayToLocal = (d: number) => d === 0 ? 6 : d - 1;
@@ -383,14 +385,12 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                                 // Check if this specific day is completed
                                 // We need to check if ANY date in completedDates corresponds to this day index in the CURRENT week
                                 // Calculate the Date object for this index in current week
-                                const d = new Date(today);
-                                const currentDay = jsDayToLocal(today.getDay());
-                                const diff = index - currentDay;
-                                d.setDate(today.getDate() + diff);
+                                // Calculate date for this column
+                                const diff = index - currentDayIndex;
+                                const d = new Date(currentDate);
+                                d.setDate(currentDate.getDate() + diff);
 
-                                // Now check if 'd' as YYYY-MM-DD exists in completedDates
-                                const key = getCompletionKey(d, 'Daily'); // Use Daily format since we store YYYY-MM-DD
-                                const isDayDone = habit.completedDates.includes(key);
+                                const isDayDone = isCompleted(habit.completedDates, 'Daily', d);
 
                                 const isSelected = habit.selectedDays.includes(index);
 
@@ -413,17 +413,20 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
     );
 
     const renderMonthlyView = () => {
-        const now = new Date();
+        const now = currentDate;
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
         const currentDay = now.getDate();
         const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay(); // 0-6 Sun-Sat
+        // Adjust for Mon start: 0->6, 1->0 ... (Sun(0) should be 6, Mon(1) should be 0)
+        const startDayIndex = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
 
         return (
             <ScrollView style={styles.container} contentContainerStyle={styles.listContent}>
                 {filteredHabits.length === 0 ? renderEmptyState() : filteredHabits.map(habit => {
-                    const completed = isCompleted(habit.completedDates, habit.repeatType);
+                    const completed = isCompleted(habit.completedDates, habit.repeatType, currentDate);
                     const showBorder = !completed || (completed && habit.focusHabitEnabled);
                     return (
                         <FlashingView key={habit.id} active={habit.reminderEnabled} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
@@ -433,11 +436,11 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                                     <Text style={{ fontSize: 24 }}>{habit.icon}</Text>
                                 </View>
                                 <View style={styles.infoContainer}>
-                                    <Text style={[styles.habitTitle, isCompleted(habit.completedDates, habit.repeatType) && styles.completedText]}>{habit.title}</Text>
+                                    <Text style={[styles.habitTitle, isCompleted(habit.completedDates, habit.repeatType, currentDate) && styles.completedText]}>{habit.title}</Text>
                                     <Text style={styles.streakText}>🔥 {habit.streak} Ay</Text>
                                 </View>
                                 <TouchableOpacity style={styles.checkbox} onPress={() => toggleHabitCompletion(habit)}>
-                                    {isCompleted(habit.completedDates, habit.repeatType) ? (
+                                    {isCompleted(habit.completedDates, habit.repeatType, currentDate) ? (
                                         <Ionicons name="checkbox" size={32} color={COLORS.success} />
                                     ) : (
                                         <Ionicons name="square-outline" size={32} color={COLORS.textSecondary} />
@@ -447,11 +450,19 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                             <View style={styles.calendarContainer}>
                                 <Text style={styles.monthTitle}>{monthNames[currentMonth]} {currentYear}</Text>
                                 <View style={styles.calendarGrid}>
-                                    {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => (
-                                        <View key={day} style={[styles.calendarDay, day === currentDay && styles.currentDay]}>
-                                            <Text style={styles.calendarDayText}>{day}</Text>
-                                        </View>
+                                    {Array.from({ length: startDayIndex }, (_, i) => (
+                                        <View key={`empty-${i}`} style={styles.calendarDay} />
                                     ))}
+                                    {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
+                                        const dayDate = new Date(currentYear, currentMonth, day);
+                                        const isDayCompleted = isCompleted(habit.completedDates, 'Daily', dayDate);
+                                        return (
+                                            <View key={day} style={[styles.calendarDay, day === currentDay && styles.currentDay]}>
+                                                <Text style={styles.calendarDayText}>{day}</Text>
+                                                {isDayCompleted && <View style={styles.dot} />}
+                                            </View>
+                                        );
+                                    })}
                                 </View>
                             </View>
                         </FlashingView>
@@ -462,14 +473,14 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
     };
 
     const renderYearlyView = () => {
-        const now = new Date();
+        const now = currentDate;
         const currentYear = now.getFullYear();
         const monthNamesShort = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
 
         return (
             <ScrollView style={styles.container} contentContainerStyle={styles.listContent}>
                 {filteredHabits.length === 0 ? renderEmptyState() : filteredHabits.map(habit => {
-                    const completed = isCompleted(habit.completedDates, habit.repeatType);
+                    const completed = isCompleted(habit.completedDates, habit.repeatType, currentDate);
                     const showBorder = !completed || (completed && habit.focusHabitEnabled);
                     return (
                         <FlashingView key={habit.id} active={habit.reminderEnabled} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>

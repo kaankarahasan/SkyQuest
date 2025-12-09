@@ -7,11 +7,13 @@ import { db } from '../../firebaseConfig';
 import { AddHabitModal } from '../components/AddHabitModal';
 import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
+import { useTime } from '../context/TimeContext';
 import { Habit } from '../types';
 import { calculateStreak, isCompleted } from '../utils/habitUtils';
 
 export const HabitDetailScreen = ({ route, navigation }: any) => {
     const { habit } = route.params;
+    const { currentDate } = useTime();
     const [localHabit, setLocalHabit] = useState<Habit>(habit);
     const [modalVisible, setModalVisible] = useState(false);
     const [viewMode, setViewMode] = useState<'weekly' | 'monthly' | 'yearly'>('monthly');
@@ -49,7 +51,7 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
                     selectedDays: data.selectedDays,
                     createdAt: data.createdAt,
                     completedDates: data.completedDates || [],
-                    streak: calculateStreak(data.completedDates || [], data.repeatType),
+                    streak: calculateStreak(data.completedDates || [], data.repeatType, currentDate),
                     category: data.category,
                     focusHabitEnabled: data.focusHabitEnabled,
                 });
@@ -62,7 +64,7 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
             console.error("Habit listener error:", error);
         });
         return () => unsubscribe();
-    }, [habit.id]);
+    }, [habit.id, currentDate]);
 
     const handleDelete = () => {
         Alert.alert(
@@ -87,7 +89,7 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
         );
     };
 
-    const currentStreak = calculateStreak(localHabit.completedDates, localHabit.repeatType);
+    const currentStreak = calculateStreak(localHabit.completedDates, localHabit.repeatType, currentDate);
     const totalCompletions = localHabit.completedDates ? localHabit.completedDates.length : 0;
 
     return (
@@ -141,7 +143,7 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
                                 // Calculate if this day is completed in the current week
                                 // This is tricky because "Weekly" view usually implies "this week"
                                 // Let's assume we show the current week's status
-                                const today = new Date();
+                                const today = currentDate;
                                 const currentDay = today.getDay() || 7; // 1-7
                                 const diff = index + 1 - currentDay; // index is 0-6 (Mon-Sun), currentDay is 1-7 (Mon-Sun)
                                 const targetDate = new Date(today);
@@ -166,13 +168,13 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
                     {viewMode === 'monthly' && (
                         <View style={styles.calendarContainer}>
                             <Text style={styles.monthTitle}>
-                                {['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'][new Date().getMonth()]} {new Date().getFullYear()}
+                                {['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'][currentDate.getMonth()]} {currentDate.getFullYear()}
                             </Text>
                             <View style={styles.calendarGrid}>
-                                {Array.from({ length: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() }, (_, i) => i + 1).map(day => {
-                                    const date = new Date(new Date().getFullYear(), new Date().getMonth(), day);
+                                {Array.from({ length: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate() }, (_, i) => i + 1).map(day => {
+                                    const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
                                     const isDone = isCompleted(localHabit.completedDates, localHabit.repeatType, date);
-                                    const isToday = day === new Date().getDate();
+                                    const isToday = day === currentDate.getDate();
 
                                     return (
                                         <View key={day} style={[styles.calendarDay, isToday && styles.currentDay, isDone && !isToday && styles.completedDay]}>
@@ -188,7 +190,7 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
                     {viewMode === 'yearly' && (
                         <View style={styles.heatmapContainer}>
                             {Array.from({ length: 12 }, (_, monthIndex) => {
-                                const daysInMonth = new Date(new Date().getFullYear(), monthIndex + 1, 0).getDate();
+                                const daysInMonth = new Date(currentDate.getFullYear(), monthIndex + 1, 0).getDate();
                                 return (
                                     <View key={monthIndex} style={styles.monthRow}>
                                         <Text style={styles.monthLabel}>
@@ -196,7 +198,7 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
                                         </Text>
                                         <View style={styles.heatmapGrid}>
                                             {Array.from({ length: daysInMonth }, (_, dayIndex) => {
-                                                const date = new Date(new Date().getFullYear(), monthIndex, dayIndex + 1);
+                                                const date = new Date(currentDate.getFullYear(), monthIndex, dayIndex + 1);
                                                 const isDone = isCompleted(localHabit.completedDates, localHabit.repeatType, date);
                                                 return (
                                                     <View key={dayIndex} style={[styles.heatmapCell, { backgroundColor: isDone ? COLORS.success : '#444' }]} />

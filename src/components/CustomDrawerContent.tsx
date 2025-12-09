@@ -1,14 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerContentScrollView } from '@react-navigation/drawer';
 import { signOut } from 'firebase/auth';
-import React from 'react';
+import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
 import { isAdmin, resetAdminData } from '../utils/adminUtils';
+import { TimeSimulationPanel } from './TimeSimulationPanel';
 
 export const CustomDrawerContent = (props: any) => {
+    const [simulationVisible, setSimulationVisible] = useState(false);
+
     const handleLogout = async () => {
         try {
             await signOut(auth);
@@ -93,14 +96,24 @@ export const CustomDrawerContent = (props: any) => {
 
             <View style={styles.footer}>
                 {isAdmin(auth.currentUser) && (
-                    <TouchableOpacity style={styles.resetButton} onPress={handleAdminReset}>
-                        <Text style={styles.resetButtonText}>SIFIRLA (ADMIN)</Text>
-                    </TouchableOpacity>
+                    <>
+                        <TouchableOpacity style={styles.simButton} onPress={() => setSimulationVisible(true)}>
+                            <Text style={styles.simButtonText}>ZAMAN SİMÜLASYONU</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.resetButton} onPress={handleAdminReset}>
+                            <Text style={styles.resetButtonText}>SIFIRLA (ADMIN)</Text>
+                        </TouchableOpacity>
+                    </>
                 )}
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <Text style={styles.logoutText}>Çıkış Yap</Text>
                 </TouchableOpacity>
             </View>
+
+            <TimeSimulationPanel
+                visible={simulationVisible}
+                onClose={() => setSimulationVisible(false)}
+            />
         </View>
     );
 };
@@ -177,6 +190,19 @@ const styles = StyleSheet.create({
     },
     resetButtonText: {
         color: COLORS.white,
+        fontSize: 16,
+        fontWeight: 'bold',
+        fontFamily: FONTS.bold,
+    },
+    simButton: {
+        backgroundColor: COLORS.primary,
+        paddingVertical: 12,
+        borderRadius: 12,
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    simButtonText: {
+        color: COLORS.background,
         fontSize: 16,
         fontWeight: 'bold',
         fontFamily: FONTS.bold,

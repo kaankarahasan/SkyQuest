@@ -75,11 +75,11 @@ const getIsoKey = (date: Date) => {
     return `${d.getUTCFullYear()}-W${weekNo.toString().padStart(2, '0')}`;
 }
 
-export const calculateStreak = (completedDates: string[], frequency: RepeatType): number => {
+export const calculateStreak = (completedDates: string[], frequency: RepeatType, date: Date = new Date()): number => {
     if (!completedDates || completedDates.length === 0) return 0;
 
     let streak = 0;
-    const today = new Date();
+    const today = date;
     let currentCheckDate = new Date(today);
 
     // Check if completed today (or current period)
