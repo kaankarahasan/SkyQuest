@@ -51,7 +51,13 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
                     streak: calculateStreak(data.completedDates || [], data.repeatType),
                     category: data.category,
                 });
+            } else {
+                // Document deleted or not found
+                // We could handle navigation back here if desired, but for now just avoid error
+                console.log("Habit document does not exist");
             }
+        }, (error) => {
+            console.error("Habit listener error:", error);
         });
         return () => unsubscribe();
     }, [habit.id]);

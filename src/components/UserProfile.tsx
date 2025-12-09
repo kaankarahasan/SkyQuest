@@ -25,6 +25,8 @@ export const UserProfile = () => {
                 if (doc.exists()) {
                     setUserData({ ...DEFAULT_USER, ...doc.data() });
                 }
+            }, (error) => {
+                console.error("UserProfile listener error:", error);
             });
             return () => unsubscribe();
         }

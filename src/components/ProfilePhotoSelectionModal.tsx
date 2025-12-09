@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { doc, setDoc } from 'firebase/firestore';
 import React, { useState } from 'react';
-import { Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
 import { AVATARS } from '../utils/avatarUtils';
@@ -14,7 +14,24 @@ interface ProfilePhotoSelectionModalProps {
 }
 
 export const ProfilePhotoSelectionModal = ({ visible, onClose, currentPhoto, onSelect }: ProfilePhotoSelectionModalProps) => {
-    const [selectedAvatar, setSelectedAvatar] = useState<any>(currentPhoto);
+    const [selectedAvatar, setSelectedAvatar] = useState<any>(null);
+
+    React.useEffect(() => {
+        if (visible) {
+            if (!currentPhoto) {
+                setSelectedAvatar(null);
+            } else if (typeof currentPhoto === 'string' && currentPhoto.startsWith('avatar_')) {
+                const index = parseInt(currentPhoto.split('_')[1], 10) - 1;
+                if (index >= 0 && index < AVATARS.length) {
+                    setSelectedAvatar(AVATARS[index]);
+                } else {
+                    setSelectedAvatar(null);
+                }
+            } else {
+                setSelectedAvatar(null);
+            }
+        }
+    }, [visible, currentPhoto]);
 
     const handleSave = async () => {
         const user = auth.currentUser;
@@ -86,6 +103,34 @@ export const ProfilePhotoSelectionModal = ({ visible, onClose, currentPhoto, onS
                             </TouchableOpacity>
                         ))}
                     </ScrollView>
+
+                    <TouchableOpacity style={styles.resetButton} onPress={() => {
+                        Alert.alert(
+                            "Emin misiniz?",
+                            "Profil fotoğrafınızı kaldırmak istediğinize emin misiniz?",
+                            [
+                                {
+                                    text: "Vazgeç",
+                                    style: "cancel"
+                                },
+                                {
+                                    text: "Kaldır",
+                                    style: "destructive",
+                                    onPress: async () => {
+                                        const user = auth.currentUser;
+                                        if (user) {
+                                            const userRef = doc(db, 'users', user.uid);
+                                            await setDoc(userRef, { photoUrl: null }, { merge: true });
+                                            onSelect(null);
+                                            onClose();
+                                        }
+                                    }
+                                }
+                            ]
+                        );
+                    }}>
+                        <Text style={styles.resetButtonText}>Fotoğrafı Kaldır</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
         </Modal>
@@ -104,6 +149,20 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 20,
         height: '80%',
         padding: 20,
+        paddingBottom: 40, // Ensure space for bottom button if needed
+    },
+    // ... existing styles ...
+    resetButton: {
+        marginTop: 10,
+        paddingVertical: 12,
+        alignItems: 'center',
+        borderTopWidth: 1,
+        borderTopColor: '#333',
+    },
+    resetButtonText: {
+        color: COLORS.error,
+        fontSize: 16,
+        fontWeight: 'bold',
     },
     header: {
         flexDirection: 'row',
@@ -117,9 +176,14 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     saveButton: {
-        color: COLORS.success,
-        fontSize: 16,
+        color: '#FFFFFF',
+        backgroundColor: COLORS.success,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 8,
+        overflow: 'hidden',
         fontWeight: 'bold',
+        fontSize: 16,
     },
     gridContainer: {
         flexDirection: 'row',

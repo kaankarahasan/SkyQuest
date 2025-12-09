@@ -5,8 +5,11 @@ service cloud.firestore {
       // Allow create if the new document's userId matches the authenticated user's ID
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       
-      // Allow read, update, delete if the existing document's userId matches the authenticated user's ID
-      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      // Allow read if the doc doesn't exist (handle delete/not-found) OR if it belongs to the user
+      allow read: if request.auth != null && (resource == null || resource.data.userId == request.auth.uid);
+      
+      // Allow update, delete if the document belongs to the user
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
 
     match /users/{userId} {

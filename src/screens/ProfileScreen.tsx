@@ -25,6 +25,8 @@ export const ProfileScreen = ({ navigation }: any) => {
                     setPhotoUrl(data.photoUrl);
                     if (data.displayName) setName(data.displayName);
                 }
+            }, (error) => {
+                console.error("Profile listener error:", error);
             });
             return () => unsubscribe();
         }
