@@ -14,3 +14,14 @@ export interface Habit {
     streak: number;
     category: string;
 }
+
+export interface User {
+    uid: string;
+    email: string;
+    displayName: string;
+    photoUrl: string | null;
+    points: number;
+    level: number;
+    earnedBadgeIds: string[];
+    totalCompletions: number;
+}

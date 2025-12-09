@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { auth, db } from '../../firebaseConfig';
 import { ProfilePhotoSelectionModal } from '../components/ProfilePhotoSelectionModal';
 import { COLORS } from '../constants/colors';
+import { BADGES } from '../constants/gamification';
 import { getAvatarSource } from '../utils/avatarUtils';
 
 export const ProfileScreen = ({ navigation }: any) => {
@@ -14,6 +15,8 @@ export const ProfileScreen = ({ navigation }: any) => {
     const [email, setEmail] = useState(user?.email || '');
     const [password, setPassword] = useState(''); // Password cannot be retrieved, only reset
     const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+
+    const [earnedBadges, setEarnedBadges] = useState<any[]>([]);
     const [modalVisible, setModalVisible] = useState(false);
 
     useEffect(() => {
@@ -24,6 +27,10 @@ export const ProfileScreen = ({ navigation }: any) => {
                     const data = doc.data();
                     setPhotoUrl(data.photoUrl);
                     if (data.displayName) setName(data.displayName);
+
+                    const badgeIds = data.earnedBadgeIds || [];
+                    const badges = BADGES.filter(b => badgeIds.includes(b.id));
+                    setEarnedBadges(badges);
                 }
             }, (error) => {
                 console.error("Profile listener error:", error);
@@ -92,17 +99,34 @@ export const ProfileScreen = ({ navigation }: any) => {
                 </View>
 
                 <Text style={styles.sectionTitle}>ROZETLER</Text>
-                <View style={styles.badgeCard}>
-                    <View style={styles.badgeIconContainer}>
-                        <Ionicons name="ribbon-outline" size={48} color={COLORS.textSecondary} />
+
+                {earnedBadges.length > 0 ? (
+                    <View style={styles.badgesList}>
+                        {earnedBadges.map((badge) => (
+                            <View key={badge.id} style={styles.badgeCard}>
+                                <View style={styles.iconContainer}>
+                                    <Image source={badge.icon} style={styles.badgeIcon} />
+                                </View>
+                                <View style={styles.infoContainer}>
+                                    <Text style={styles.badgeTitle}>{badge.title}</Text>
+                                    <Text style={styles.badgeDescription}>{badge.description}</Text>
+                                </View>
+                            </View>
+                        ))}
                     </View>
-                    <View style={styles.badgeInfo}>
-                        <Text style={[styles.badgeTitle, { color: COLORS.textSecondary }]}>Henüz hiç rozet kazanmadın</Text>
-                        <Text style={styles.badgeDescription}>
-                            Alışkanlıklarını tamamlayarak ve seviye atlayarak rozetler kazanabilirsin.
-                        </Text>
+                ) : (
+                    <View style={styles.emptyBadgeCard}>
+                        <View style={styles.badgeIconContainer}>
+                            <Ionicons name="ribbon-outline" size={48} color={COLORS.textSecondary} />
+                        </View>
+                        <View style={styles.badgeInfo}>
+                            <Text style={[styles.badgeTitle, { color: COLORS.textSecondary }]}>Henüz hiç rozet kazanmadın</Text>
+                            <Text style={styles.badgeDescription}>
+                                Alışkanlıklarını tamamlayarak ve seviye atlayarak rozetler kazanabilirsin.
+                            </Text>
+                        </View>
                     </View>
-                </View>
+                )}
 
 
 
@@ -187,6 +211,14 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     badgeCard: {
+        flexDirection: 'row',
+        backgroundColor: COLORS.cardBackground,
+        padding: 16,
+        borderRadius: 12,
+        marginBottom: 12,
+        alignItems: 'center',
+    },
+    emptyBadgeCard: { // Renamed from old badgeCard to prevent conflict logic
         backgroundColor: '#333',
         borderRadius: 12,
         padding: 16,
@@ -198,6 +230,21 @@ const styles = StyleSheet.create({
         marginRight: 16,
     },
     badgeInfo: {
+        flex: 1,
+    },
+    iconContainer: {
+        marginRight: 16,
+        width: 60,
+        height: 60,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    badgeIcon: {
+        width: 60,
+        height: 60,
+        resizeMode: 'contain',
+    },
+    infoContainer: {
         flex: 1,
     },
     badgeTitle: {
@@ -223,5 +270,12 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
     },
-
+    badgesList: {
+        marginBottom: 30,
+    },
+    // Removed old earnedBadgeCard styles
+    headerRow: { // Keep headerRow for other potential uses or strict removal if unused
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
 });

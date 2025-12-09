@@ -1,74 +1,55 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { doc, onSnapshot } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { auth, db } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
-
-// Mock Data for Badges
-const BADGES = [
-    {
-        id: '1',
-        title: 'Seri Katılım',
-        description: 'Göreve ardı ardına 7 gün katılarak cesaretini gösterdin. (Seviye 1, Seviye 3, Seviye 5)',
-        icon: 'shield-checkmark', // Using Ionicons for now, ideally custom images
-        color: '#FF6B6B',
-    },
-    {
-        id: '2',
-        title: 'Alışkanlık Zinciri',
-        description: 'Alışkanlığın ilk zincirini kurdun. Daha güçlü bağlar oluştur! (Seviye 1, Seviye 3, Seviye 5)',
-        icon: 'link',
-        color: '#4ECDC4',
-    },
-    {
-        id: '3',
-        title: 'Günlük Ritüel',
-        description: 'Görevine sabahın ilk saatlerinde sadık kaldın. (Seviye 1, Seviye 3, Seviye 5)',
-        icon: 'sunny',
-        color: '#FFE66D',
-    },
-    {
-        id: '4',
-        title: 'Haftanın Tamamı',
-        description: 'Bir haftalık tüm görevlerini başarıyla belgeledin. (Seviye 1, Seviye 3, Seviye 5)',
-        icon: 'calendar',
-        color: '#1A535C',
-    },
-    {
-        id: '5',
-        title: 'Kesintisiz',
-        description: 'Dikkatin dağılsa da odağını geri kazanmayı başardın. (Seviye 1, Seviye 3, Seviye 5)',
-        icon: 'flash',
-        color: '#FF9F1C',
-    },
-    {
-        id: '6',
-        title: 'Toplam Puan',
-        description: 'İlk 10 puanını kazandın, macera şimdi başlıyor! (Seviye 1, Seviye 3, Seviye 5)',
-        icon: 'trophy',
-        color: '#FFD700',
-    },
-    {
-        id: '7',
-        title: 'Deneyim Toplama',
-        description: 'Yeni keşifler yapmaya ve deneyimlemeye devam et. (Seviye 1, Seviye 3, Seviye 5)',
-        icon: 'map',
-        color: '#95D5B2',
-    },
-];
+import { BADGES } from '../constants/gamification';
 
 export const BadgesScreen = ({ navigation }: any) => {
-    const renderItem = ({ item }: { item: typeof BADGES[0] }) => (
-        <View style={styles.card}>
-            <View style={styles.iconContainer}>
-                <Ionicons name={item.icon as any} size={48} color={item.color} />
+    const user = auth.currentUser;
+    const [earnedBadgeIds, setEarnedBadgeIds] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (user) {
+            const userRef = doc(db, 'users', user.uid);
+            const unsubscribe = onSnapshot(userRef, (doc) => {
+                if (doc.exists()) {
+                    setEarnedBadgeIds(doc.data().earnedBadgeIds || []);
+                }
+            }, (error) => {
+                console.error("BadgesScreen listener error:", error);
+            });
+            return () => unsubscribe();
+        }
+    }, [user]);
+
+    const renderItem = ({ item }: { item: typeof BADGES[0] }) => {
+        const isUnlocked = earnedBadgeIds.includes(item.id);
+
+        return (
+            <View style={[styles.card, !isUnlocked && styles.lockedCard]}>
+                <View style={styles.iconContainer}>
+                    {isUnlocked ? (
+                        <Image source={item.icon} style={styles.badgeIcon} />
+                    ) : (
+                        <View style={styles.lockedIcon}>
+                            <Ionicons name="lock-closed" size={32} color="#555" />
+                        </View>
+                    )}
+                </View>
+                <View style={styles.infoContainer}>
+                    <Text style={[styles.title, !isUnlocked && styles.lockedText]}>
+                        {isUnlocked ? item.title : '??? (Kilitli)'}
+                    </Text>
+                    <Text style={[styles.description, !isUnlocked && styles.lockedText]}>
+                        {isUnlocked ? item.description : 'Bu rozeti kazanmak için görevleri tamamla.'}
+                    </Text>
+                </View>
             </View>
-            <View style={styles.infoContainer}>
-                <Text style={styles.title}>{item.title}</Text>
-                <Text style={styles.description}>{item.description}</Text>
-            </View>
-        </View>
-    );
+        );
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -106,22 +87,40 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         fontSize: 20,
         fontWeight: 'bold',
-        fontFamily: 'System', // Replace with custom pixel font if available
     },
     listContent: {
         padding: 16,
     },
     card: {
         flexDirection: 'row',
-        backgroundColor: '#333',
+        backgroundColor: COLORS.cardBackground,
         padding: 16,
         borderRadius: 12,
         marginBottom: 12,
         alignItems: 'center',
     },
+    lockedCard: {
+        backgroundColor: '#222', // Darker background for locked
+        opacity: 0.7,
+    },
     iconContainer: {
         marginRight: 16,
         width: 60,
+        height: 60,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    badgeIcon: {
+        width: 60,
+        height: 60,
+        resizeMode: 'contain',
+    },
+    lockedIcon: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: '#333',
+        justifyContent: 'center',
         alignItems: 'center',
     },
     infoContainer: {
@@ -137,5 +136,8 @@ const styles = StyleSheet.create({
         color: COLORS.textSecondary,
         fontSize: 14,
         lineHeight: 20,
+    },
+    lockedText: {
+        color: '#666',
     },
 });

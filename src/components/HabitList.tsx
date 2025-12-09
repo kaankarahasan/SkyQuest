@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { collection, doc, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, runTransaction, updateDoc, where } from 'firebase/firestore';
 import React from 'react';
-import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
-import { Habit, RepeatType } from '../types';
+import { Habit, RepeatType, User } from '../types';
+import { calculateLevel, checkBadges } from '../utils/gamificationUtils';
 import { calculateStreak, getCompletionKey, isCompleted } from '../utils/habitUtils';
 
 interface HabitListProps {
@@ -66,11 +67,78 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
         const newStreak = calculateStreak(newCompletedDates, habit.repeatType);
 
         try {
+            // Update Habit
             const habitRef = doc(db, 'habits', habit.id);
             await updateDoc(habitRef, {
                 completedDates: newCompletedDates,
                 streak: newStreak
             });
+
+            // Update User (Gamification)
+            const userRef = doc(db, 'users', habit.userId);
+            await runTransaction(db, async (transaction) => {
+                const userDoc = await transaction.get(userRef);
+
+                let userData: User;
+                if (!userDoc.exists()) {
+                    userData = {
+                        uid: habit.userId,
+                        email: auth.currentUser?.email || '',
+                        displayName: auth.currentUser?.displayName || '',
+                        photoUrl: null,
+                        points: 0,
+                        level: 1,
+                        earnedBadgeIds: [],
+                        totalCompletions: 0
+                    };
+                } else {
+                    userData = userDoc.data() as User;
+                }
+
+                let newPoints = userData.points || 0;
+                let newTotalCompletions = userData.totalCompletions || 0;
+
+                if (!isAlreadyCompleted) {
+                    newPoints += 1;
+                    newTotalCompletions += 1;
+                } else {
+                    newPoints = Math.max(0, newPoints - 1);
+                    newTotalCompletions = Math.max(0, newTotalCompletions - 1);
+                }
+
+                // Calculate Level
+                const { level, title } = calculateLevel(newPoints);
+
+                // Check Badges (Only on completion)
+                let newEarnedBadges = userData.earnedBadgeIds || [];
+                if (!isAlreadyCompleted) {
+                    const updatedUserForCheck = { ...userData, points: newPoints, level, totalCompletions: newTotalCompletions, earnedBadgeIds: newEarnedBadges };
+                    const habitDataForCheck = { ...habit, streak: newStreak };
+
+                    const unlockedBadges = checkBadges(updatedUserForCheck, habitDataForCheck);
+                    if (unlockedBadges.length > 0) {
+                        newEarnedBadges = [...newEarnedBadges, ...unlockedBadges];
+                        Alert.alert("Yeni Rozet Kazandın!", "Tebrikler, yeni bir rozet kazandın! Profilinden inceleyebilirsin.");
+                    }
+                }
+
+                transaction.set(userRef, {
+                    ...userData,
+                    points: newPoints,
+                    level: level,
+                    // title is not stored in User type usually, but we were updating it before. User type in types.ts doesn't have title.
+                    // Assuming we might want to store it or just rely on level. The previous code updated 'title', let's keep it safe or remove if strict.
+                    // The User interface in types.ts DOES NOT have title. I should probably NOT save title to Firestore if it's not in the type, 
+                    // OR I should update the type. 
+                    // However, UserProfile calculates title from level/points anyway.
+                    // I will omit title from the save to be clean, unless the previous code relied on it. 
+                    // Previous code: transaction.update(..., { title: title ... })
+                    // Let's stick to the interface. UserProfile calculates it.
+                    totalCompletions: newTotalCompletions,
+                    earnedBadgeIds: newEarnedBadges
+                }, { merge: true });
+            });
+
         } catch (error) {
             console.error("Error updating habit completion:", error);
         }

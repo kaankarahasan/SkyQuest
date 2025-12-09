@@ -16,4 +16,5 @@ export const COLORS = {
   warning: '#FFC107',
   modalBackground: '#1E1E1E',
   buttonText: '#FFFFFF',
+  gold: '#FFD700',
 };
