@@ -446,7 +446,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                     const completed = isCompleted(habit.completedDates, habit.repeatType, currentDate);
                     const showBorder = !completed || (completed && habit.focusHabitEnabled);
                     return (
-                        <FlashingView key={habit.id} active={habit.reminderEnabled} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
+                        <FlashingView key={habit.id} active={habit.reminderEnabled && !completed} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
                             <GlowOverlay active={completed} color={habit.color} />
                             <View style={styles.habitHeader}>
                                 <View style={styles.iconContainer}>
@@ -500,7 +500,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                     const completed = isCompleted(habit.completedDates, habit.repeatType, currentDate);
                     const showBorder = !completed || (completed && habit.focusHabitEnabled);
                     return (
-                        <FlashingView key={habit.id} active={habit.reminderEnabled} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
+                        <FlashingView key={habit.id} active={habit.reminderEnabled && !completed} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
                             <GlowOverlay active={completed} color={habit.color} />
                             <View style={styles.habitHeader}>
                                 <View style={styles.iconContainer}>
