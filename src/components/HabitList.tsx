@@ -131,85 +131,95 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
         const key = getCompletionKey(today, habit.repeatType);
         const isAlreadyCompleted = isCompleted(habit.completedDates, habit.repeatType, today);
 
-        let newCompletedDates = [...habit.completedDates];
+        // 1. Irreversibility & Confirmation
         if (isAlreadyCompleted) {
-            newCompletedDates = newCompletedDates.filter(d => d !== key);
-        } else {
-            newCompletedDates.push(key);
+            Alert.alert("Tamamlandı", "Bu alışkanlık zaten tamamlandı ve geri alınamaz.");
+            return;
         }
 
-        const newStreak = calculateStreak(newCompletedDates, habit.repeatType);
+        Alert.alert(
+            "Alışkanlığı Tamamla",
+            "Bu alışkanlığı tamamlamak istediğine emin misin? Bu işlem geri alınamaz.",
+            [
+                { text: "Vazgeç", style: "cancel" },
+                {
+                    text: "Evet, Tamamla",
+                    onPress: async () => {
+                        // Proceed with completion
+                        let newCompletedDates = [...habit.completedDates];
+                        if (!newCompletedDates.includes(key)) {
+                            newCompletedDates.push(key);
+                        }
 
-        try {
-            // Update Habit
-            const habitRef = doc(db, 'habits', habit.id);
-            await updateDoc(habitRef, {
-                completedDates: newCompletedDates,
-                streak: newStreak
-            });
+                        const newStreak = calculateStreak(newCompletedDates, habit.repeatType);
 
-            // Update User (Gamification)
-            const userRef = doc(db, 'users', habit.userId);
-            await runTransaction(db, async (transaction) => {
-                const userDoc = await transaction.get(userRef);
+                        try {
+                            // Update Habit
+                            const habitRef = doc(db, 'habits', habit.id);
+                            await updateDoc(habitRef, {
+                                completedDates: newCompletedDates,
+                                streak: newStreak
+                            });
 
-                let userData: User;
-                if (!userDoc.exists()) {
-                    userData = {
-                        uid: habit.userId,
-                        email: auth.currentUser?.email || '',
-                        displayName: auth.currentUser?.displayName || '',
-                        photoUrl: null,
-                        points: 0,
-                        level: 1,
-                        earnedBadgeIds: [],
-                        totalCompletions: 0
-                    };
-                } else {
-                    userData = userDoc.data() as User;
-                }
+                            // Update User (Gamification)
+                            const userRef = doc(db, 'users', habit.userId);
+                            await runTransaction(db, async (transaction) => {
+                                const userDoc = await transaction.get(userRef);
 
-                let newPoints = userData.points || 0;
-                let newTotalCompletions = userData.totalCompletions || 0;
+                                let userData: User;
+                                if (!userDoc.exists()) {
+                                    userData = {
+                                        uid: habit.userId,
+                                        email: auth.currentUser?.email || '',
+                                        displayName: auth.currentUser?.displayName || '',
+                                        photoUrl: null,
+                                        points: 0,
+                                        level: 1,
+                                        earnedBadgeIds: [],
+                                        totalCompletions: 0
+                                    };
+                                } else {
+                                    userData = userDoc.data() as User;
+                                }
 
-                const pointsToChange = habit.focusHabitEnabled ? 3 : 1;
+                                let newPoints = userData.points || 0;
+                                let newTotalCompletions = userData.totalCompletions || 0;
 
-                if (!isAlreadyCompleted) {
-                    newPoints += pointsToChange;
-                    newTotalCompletions += 1;
-                } else {
-                    newPoints = Math.max(0, newPoints - pointsToChange);
-                    newTotalCompletions = Math.max(0, newTotalCompletions - 1);
-                }
+                                const pointsToChange = habit.focusHabitEnabled ? 3 : 1;
 
-                // Calculate Level
-                const { level, title } = calculateLevel(newPoints);
+                                newPoints += pointsToChange;
+                                newTotalCompletions += 1;
 
-                // Check Badges (Only on completion)
-                let newEarnedBadges = userData.earnedBadgeIds || [];
-                if (!isAlreadyCompleted) {
-                    const updatedUserForCheck = { ...userData, points: newPoints, level, totalCompletions: newTotalCompletions, earnedBadgeIds: newEarnedBadges };
-                    const habitDataForCheck = { ...habit, streak: newStreak };
+                                // Calculate Level
+                                const { level, title } = calculateLevel(newPoints);
 
-                    const unlockedBadges = checkBadges(updatedUserForCheck, habitDataForCheck);
-                    if (unlockedBadges.length > 0) {
-                        newEarnedBadges = [...newEarnedBadges, ...unlockedBadges];
-                        Alert.alert("Yeni Rozet Kazandın!", "Tebrikler, yeni bir rozet kazandın! Profilinden inceleyebilirsin.");
+                                // Check Badges (Only on completion)
+                                let newEarnedBadges = userData.earnedBadgeIds || [];
+                                const updatedUserForCheck = { ...userData, points: newPoints, level, totalCompletions: newTotalCompletions, earnedBadgeIds: newEarnedBadges };
+                                const habitDataForCheck = { ...habit, streak: newStreak };
+
+                                const unlockedBadges = checkBadges(updatedUserForCheck, habitDataForCheck);
+                                if (unlockedBadges.length > 0) {
+                                    newEarnedBadges = [...newEarnedBadges, ...unlockedBadges];
+                                    Alert.alert("Yeni Rozet Kazandın!", "Tebrikler, yeni bir rozet kazandın! Profilinden inceleyebilirsin.");
+                                }
+
+                                transaction.set(userRef, {
+                                    ...userData,
+                                    points: newPoints,
+                                    level: level,
+                                    totalCompletions: newTotalCompletions,
+                                    earnedBadgeIds: newEarnedBadges
+                                }, { merge: true });
+                            });
+
+                        } catch (error) {
+                            console.error("Error updating habit completion:", error);
+                        }
                     }
                 }
-
-                transaction.set(userRef, {
-                    ...userData,
-                    points: newPoints,
-                    level: level,
-                    totalCompletions: newTotalCompletions,
-                    earnedBadgeIds: newEarnedBadges
-                }, { merge: true });
-            });
-
-        } catch (error) {
-            console.error("Error updating habit completion:", error);
-        }
+            ]
+        );
     };
 
     const renderItem = ({ item }: { item: Habit }) => {
@@ -268,6 +278,18 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
             {filteredHabits.length === 0 ? renderEmptyState() : filteredHabits.map(habit => {
                 const completed = isCompleted(habit.completedDates, habit.repeatType);
                 const showBorder = !completed || (completed && habit.focusHabitEnabled);
+
+                // Check if today is allowed for this habit
+                const today = new Date();
+                const dayIndex = today.getDay() || 7; // 1-7 (Mon-Sun) but getDay returns 0-6 (Sun-Sat).
+                // Our selectedDays: 0=Mon, 6=Sun. 
+                // JS getDay(): 0=Sun, 1=Mon...6=Sat.
+                // Conversion: JS(1)=Mon(0). JS(0)=Sun(6).
+                const jsDayToLocal = (d: number) => d === 0 ? 6 : d - 1;
+                const currentDayIndex = jsDayToLocal(today.getDay());
+
+                const isDayAllowed = habit.selectedDays && habit.selectedDays.includes(currentDayIndex);
+
                 return (
                     <View key={habit.id} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
                         <View style={styles.habitHeader}>
@@ -275,11 +297,14 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                                 <Text style={{ fontSize: 24 }}>{habit.icon}</Text>
                             </View>
                             <View style={styles.infoContainer}>
-                                <Text style={[styles.habitTitle, isCompleted(habit.completedDates, habit.repeatType) && styles.completedText]}>{habit.title}</Text>
+                                <Text style={[styles.habitTitle, completed && styles.completedText]}>{habit.title}</Text>
                                 <Text style={styles.streakText}>🔥 {habit.streak} Hafta</Text>
                             </View>
-                            <TouchableOpacity style={styles.checkbox} onPress={() => toggleHabitCompletion(habit)}>
-                                {isCompleted(habit.completedDates, habit.repeatType) ? (
+                            <TouchableOpacity
+                                style={[styles.checkbox, !isDayAllowed && { opacity: 0.3 }]}
+                                onPress={() => isDayAllowed ? toggleHabitCompletion(habit) : Alert.alert("Uyarı", "Bu alışkanlık bugün için planlanmamış.")}
+                            >
+                                {completed ? (
                                     <Ionicons name="checkbox" size={32} color={COLORS.success} />
                                 ) : (
                                     <Ionicons name="square-outline" size={32} color={COLORS.textSecondary} />
@@ -287,12 +312,32 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                             </TouchableOpacity>
                         </View>
                         <View style={styles.weekGrid}>
-                            {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((day, index) => (
-                                <View key={index} style={styles.dayColumn}>
-                                    <Text style={styles.dayLabel}>{day}</Text>
-                                    <Ionicons name="ellipse-outline" size={24} color={COLORS.textSecondary} />
-                                </View>
-                            ))}
+                            {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((day, index) => {
+                                // Check if this specific day is completed
+                                // We need to check if ANY date in completedDates corresponds to this day index in the CURRENT week
+                                // Calculate the Date object for this index in current week
+                                const d = new Date(today);
+                                const currentDay = jsDayToLocal(today.getDay());
+                                const diff = index - currentDay;
+                                d.setDate(today.getDate() + diff);
+
+                                // Now check if 'd' as YYYY-MM-DD exists in completedDates
+                                const key = getCompletionKey(d, 'Daily'); // Use Daily format since we store YYYY-MM-DD
+                                const isDayDone = habit.completedDates.includes(key);
+
+                                const isSelected = habit.selectedDays.includes(index);
+
+                                return (
+                                    <View key={index} style={[styles.dayColumn, !isSelected && { opacity: 0.3 }]}>
+                                        <Text style={styles.dayLabel}>{day}</Text>
+                                        <Ionicons
+                                            name={isDayDone ? "checkmark-circle" : "ellipse-outline"}
+                                            size={24}
+                                            color={isDayDone ? COLORS.success : COLORS.textSecondary}
+                                        />
+                                    </View>
+                                )
+                            })}
                         </View>
                     </View>
                 )
