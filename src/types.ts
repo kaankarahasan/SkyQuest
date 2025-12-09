@@ -13,6 +13,7 @@ export interface Habit {
     completedDates: string[]; // ISO date strings or custom keys
     streak: number;
     category: string;
+    focusHabitEnabled?: boolean;
 }
 
 export interface User {
@@ -24,4 +25,5 @@ export interface User {
     level: number;
     earnedBadgeIds: string[];
     totalCompletions: number;
+    streakBreakCount?: number;
 }

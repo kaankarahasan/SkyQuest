@@ -51,6 +51,7 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
                     completedDates: data.completedDates || [],
                     streak: calculateStreak(data.completedDates || [], data.repeatType),
                     category: data.category,
+                    focusHabitEnabled: data.focusHabitEnabled,
                 });
             } else {
                 // Document deleted or not found
@@ -219,7 +220,7 @@ export const HabitDetailScreen = ({ route, navigation }: any) => {
                         <Ionicons name="rocket" size={40} color={COLORS.text} />
                         <Text style={styles.statLabel}>Toplam</Text>
                         <Text style={styles.statLabel}>Kazanılan Puan</Text>
-                        <Text style={styles.statValue}>{totalCompletions * 10}</Text>
+                        <Text style={styles.statValue}>{totalCompletions * (localHabit.focusHabitEnabled ? 3 : 1)}</Text>
                     </View>
                 </View>
                 <View style={styles.statsRow}>

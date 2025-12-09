@@ -51,6 +51,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                     completedDates: data.completedDates || [],
                     streak: calculateStreak(data.completedDates || [], data.repeatType),
                     category: data.category,
+                    focusHabitEnabled: data.focusHabitEnabled,
                 });
             });
             setHabits(habitsData);
@@ -61,6 +62,69 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
         });
         return () => unsubscribeSnapshot();
     }, [user]);
+
+    React.useEffect(() => {
+        if (!user || loading || habits.length === 0) return;
+
+        const checkStreakPenalties = async () => {
+            const habitsToReset: Habit[] = [];
+
+            habits.forEach(habit => {
+                const currentStreak = calculateStreak(habit.completedDates || [], habit.repeatType);
+                // If calculated streak is 0 (broken) BUT stored streak was >= 3
+                // This implies we haven't processed the break yet
+                if (currentStreak === 0 && habit.streak >= 3) {
+                    habitsToReset.push(habit);
+                }
+            });
+
+            if (habitsToReset.length > 0) {
+                const userRef = doc(db, 'users', user.uid);
+
+                try {
+                    await runTransaction(db, async (transaction) => {
+                        const userDoc = await transaction.get(userRef);
+                        if (!userDoc.exists()) return;
+
+                        const userData = userDoc.data() as User;
+                        const streakBreakCount = userData.streakBreakCount || 0;
+                        let newPoints = userData.points;
+                        let alertMessage = "";
+
+                        if (streakBreakCount === 0) {
+                            // First time warning
+                            alertMessage = "Dikkat! 3 günlük bir seriyi bozdun. Bu seferlik puan kaybetmedin, ama dikkatli ol!";
+                        } else {
+                            // Penalty
+                            newPoints = Math.max(0, newPoints - 2);
+                            alertMessage = "Seri Bozuldu! 3 günlük seriyi bozduğun için 2 puan kaybettin.";
+                        }
+
+                        // Update User
+                        transaction.update(userRef, {
+                            points: newPoints,
+                            streakBreakCount: streakBreakCount + 1
+                        });
+
+                        // Reset Habit Streaks
+                        habitsToReset.forEach(habit => {
+                            const habitRef = doc(db, 'habits', habit.id);
+                            transaction.update(habitRef, { streak: 0 });
+                        });
+
+                        // Show Alert
+                        if (alertMessage) {
+                            setTimeout(() => Alert.alert("Seri Bozuldu", alertMessage), 500);
+                        }
+                    });
+                } catch (e) {
+                    console.error("Error processing penalties:", e);
+                }
+            }
+        };
+
+        checkStreakPenalties();
+    }, [habits, user, loading]);
 
     const toggleHabitCompletion = async (habit: Habit) => {
         const today = new Date();
@@ -108,11 +172,13 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                 let newPoints = userData.points || 0;
                 let newTotalCompletions = userData.totalCompletions || 0;
 
+                const pointsToChange = habit.focusHabitEnabled ? 3 : 1;
+
                 if (!isAlreadyCompleted) {
-                    newPoints += 1;
+                    newPoints += pointsToChange;
                     newTotalCompletions += 1;
                 } else {
-                    newPoints = Math.max(0, newPoints - 1);
+                    newPoints = Math.max(0, newPoints - pointsToChange);
                     newTotalCompletions = Math.max(0, newTotalCompletions - 1);
                 }
 
@@ -136,14 +202,6 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                     ...userData,
                     points: newPoints,
                     level: level,
-                    // title is not stored in User type usually, but we were updating it before. User type in types.ts doesn't have title.
-                    // Assuming we might want to store it or just rely on level. The previous code updated 'title', let's keep it safe or remove if strict.
-                    // The User interface in types.ts DOES NOT have title. I should probably NOT save title to Firestore if it's not in the type, 
-                    // OR I should update the type. 
-                    // However, UserProfile calculates title from level/points anyway.
-                    // I will omit title from the save to be clean, unless the previous code relied on it. 
-                    // Previous code: transaction.update(..., { title: title ... })
-                    // Let's stick to the interface. UserProfile calculates it.
                     totalCompletions: newTotalCompletions,
                     earnedBadgeIds: newEarnedBadges
                 }, { merge: true });
@@ -156,8 +214,10 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
 
     const renderItem = ({ item }: { item: Habit }) => {
         const completed = isCompleted(item.completedDates, item.repeatType);
+        const showBorder = !completed || (completed && item.focusHabitEnabled);
+
         return (
-            <View style={[styles.card, { borderColor: completed ? 'transparent' : item.color, borderWidth: completed ? 0 : 2 }]}>
+            <View style={[styles.card, { borderColor: showBorder ? item.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
                 <View style={styles.iconContainer}>
                     <Text style={{ fontSize: 24 }}>{item.icon}</Text>
                 </View>
@@ -177,7 +237,13 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
         );
     };
 
-    const filteredHabits = habits.filter(habit => habit.repeatType === activeTab);
+    const filteredHabits = habits
+        .filter(habit => habit.repeatType === activeTab)
+        .sort((a, b) => {
+            const aCompleted = isCompleted(a.completedDates, a.repeatType) ? 1 : 0;
+            const bCompleted = isCompleted(b.completedDates, b.repeatType) ? 1 : 0;
+            return aCompleted - bCompleted;
+        });
 
     const renderEmptyState = () => (
         <View style={styles.emptyContainer}>
@@ -199,34 +265,38 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
 
     const renderWeeklyView = () => (
         <ScrollView style={styles.container} contentContainerStyle={styles.listContent}>
-            {filteredHabits.length === 0 ? renderEmptyState() : filteredHabits.map(habit => (
-                <View key={habit.id} style={styles.weeklyCard}>
-                    <View style={styles.habitHeader}>
-                        <View style={styles.iconContainer}>
-                            <Text style={{ fontSize: 24 }}>{habit.icon}</Text>
-                        </View>
-                        <View style={styles.infoContainer}>
-                            <Text style={[styles.habitTitle, isCompleted(habit.completedDates, habit.repeatType) && styles.completedText]}>{habit.title}</Text>
-                            <Text style={styles.streakText}>🔥 {habit.streak} Hafta</Text>
-                        </View>
-                        <TouchableOpacity style={styles.checkbox} onPress={() => toggleHabitCompletion(habit)}>
-                            {isCompleted(habit.completedDates, habit.repeatType) ? (
-                                <Ionicons name="checkbox" size={32} color={COLORS.success} />
-                            ) : (
-                                <Ionicons name="square-outline" size={32} color={COLORS.textSecondary} />
-                            )}
-                        </TouchableOpacity>
-                    </View>
-                    <View style={styles.weekGrid}>
-                        {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((day, index) => (
-                            <View key={index} style={styles.dayColumn}>
-                                <Text style={styles.dayLabel}>{day}</Text>
-                                <Ionicons name="ellipse-outline" size={24} color={COLORS.textSecondary} />
+            {filteredHabits.length === 0 ? renderEmptyState() : filteredHabits.map(habit => {
+                const completed = isCompleted(habit.completedDates, habit.repeatType);
+                const showBorder = !completed || (completed && habit.focusHabitEnabled);
+                return (
+                    <View key={habit.id} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
+                        <View style={styles.habitHeader}>
+                            <View style={styles.iconContainer}>
+                                <Text style={{ fontSize: 24 }}>{habit.icon}</Text>
                             </View>
-                        ))}
+                            <View style={styles.infoContainer}>
+                                <Text style={[styles.habitTitle, isCompleted(habit.completedDates, habit.repeatType) && styles.completedText]}>{habit.title}</Text>
+                                <Text style={styles.streakText}>🔥 {habit.streak} Hafta</Text>
+                            </View>
+                            <TouchableOpacity style={styles.checkbox} onPress={() => toggleHabitCompletion(habit)}>
+                                {isCompleted(habit.completedDates, habit.repeatType) ? (
+                                    <Ionicons name="checkbox" size={32} color={COLORS.success} />
+                                ) : (
+                                    <Ionicons name="square-outline" size={32} color={COLORS.textSecondary} />
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.weekGrid}>
+                            {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((day, index) => (
+                                <View key={index} style={styles.dayColumn}>
+                                    <Text style={styles.dayLabel}>{day}</Text>
+                                    <Ionicons name="ellipse-outline" size={24} color={COLORS.textSecondary} />
+                                </View>
+                            ))}
+                        </View>
                     </View>
-                </View>
-            ))}
+                )
+            })}
         </ScrollView>
     );
 
@@ -240,36 +310,40 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
 
         return (
             <ScrollView style={styles.container} contentContainerStyle={styles.listContent}>
-                {filteredHabits.length === 0 ? renderEmptyState() : filteredHabits.map(habit => (
-                    <View key={habit.id} style={styles.weeklyCard}>
-                        <View style={styles.habitHeader}>
-                            <View style={styles.iconContainer}>
-                                <Text style={{ fontSize: 24 }}>{habit.icon}</Text>
+                {filteredHabits.length === 0 ? renderEmptyState() : filteredHabits.map(habit => {
+                    const completed = isCompleted(habit.completedDates, habit.repeatType);
+                    const showBorder = !completed || (completed && habit.focusHabitEnabled);
+                    return (
+                        <View key={habit.id} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
+                            <View style={styles.habitHeader}>
+                                <View style={styles.iconContainer}>
+                                    <Text style={{ fontSize: 24 }}>{habit.icon}</Text>
+                                </View>
+                                <View style={styles.infoContainer}>
+                                    <Text style={[styles.habitTitle, isCompleted(habit.completedDates, habit.repeatType) && styles.completedText]}>{habit.title}</Text>
+                                    <Text style={styles.streakText}>🔥 {habit.streak} Ay</Text>
+                                </View>
+                                <TouchableOpacity style={styles.checkbox} onPress={() => toggleHabitCompletion(habit)}>
+                                    {isCompleted(habit.completedDates, habit.repeatType) ? (
+                                        <Ionicons name="checkbox" size={32} color={COLORS.success} />
+                                    ) : (
+                                        <Ionicons name="square-outline" size={32} color={COLORS.textSecondary} />
+                                    )}
+                                </TouchableOpacity>
                             </View>
-                            <View style={styles.infoContainer}>
-                                <Text style={[styles.habitTitle, isCompleted(habit.completedDates, habit.repeatType) && styles.completedText]}>{habit.title}</Text>
-                                <Text style={styles.streakText}>🔥 {habit.streak} Ay</Text>
+                            <View style={styles.calendarContainer}>
+                                <Text style={styles.monthTitle}>{monthNames[currentMonth]} {currentYear}</Text>
+                                <View style={styles.calendarGrid}>
+                                    {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => (
+                                        <View key={day} style={[styles.calendarDay, day === currentDay && styles.currentDay]}>
+                                            <Text style={styles.calendarDayText}>{day}</Text>
+                                        </View>
+                                    ))}
+                                </View>
                             </View>
-                            <TouchableOpacity style={styles.checkbox} onPress={() => toggleHabitCompletion(habit)}>
-                                {isCompleted(habit.completedDates, habit.repeatType) ? (
-                                    <Ionicons name="checkbox" size={32} color={COLORS.success} />
-                                ) : (
-                                    <Ionicons name="square-outline" size={32} color={COLORS.textSecondary} />
-                                )}
-                            </TouchableOpacity>
                         </View>
-                        <View style={styles.calendarContainer}>
-                            <Text style={styles.monthTitle}>{monthNames[currentMonth]} {currentYear}</Text>
-                            <View style={styles.calendarGrid}>
-                                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => (
-                                    <View key={day} style={[styles.calendarDay, day === currentDay && styles.currentDay]}>
-                                        <Text style={styles.calendarDayText}>{day}</Text>
-                                    </View>
-                                ))}
-                            </View>
-                        </View>
-                    </View>
-                ))}
+                    )
+                })}
             </ScrollView>
         );
     };
@@ -281,41 +355,45 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
 
         return (
             <ScrollView style={styles.container} contentContainerStyle={styles.listContent}>
-                {filteredHabits.length === 0 ? renderEmptyState() : filteredHabits.map(habit => (
-                    <View key={habit.id} style={styles.weeklyCard}>
-                        <View style={styles.habitHeader}>
-                            <View style={styles.iconContainer}>
-                                <Text style={{ fontSize: 24 }}>{habit.icon}</Text>
+                {filteredHabits.length === 0 ? renderEmptyState() : filteredHabits.map(habit => {
+                    const completed = isCompleted(habit.completedDates, habit.repeatType);
+                    const showBorder = !completed || (completed && habit.focusHabitEnabled);
+                    return (
+                        <View key={habit.id} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
+                            <View style={styles.habitHeader}>
+                                <View style={styles.iconContainer}>
+                                    <Text style={{ fontSize: 24 }}>{habit.icon}</Text>
+                                </View>
+                                <View style={styles.infoContainer}>
+                                    <Text style={[styles.habitTitle, isCompleted(habit.completedDates, habit.repeatType) && styles.completedText]}>{habit.title}</Text>
+                                    <Text style={styles.streakText}>🔥 {habit.streak} Yıl</Text>
+                                </View>
+                                <TouchableOpacity style={styles.checkbox} onPress={() => toggleHabitCompletion(habit)}>
+                                    {isCompleted(habit.completedDates, habit.repeatType) ? (
+                                        <Ionicons name="checkbox" size={32} color={COLORS.success} />
+                                    ) : (
+                                        <Ionicons name="square-outline" size={32} color={COLORS.textSecondary} />
+                                    )}
+                                </TouchableOpacity>
                             </View>
-                            <View style={styles.infoContainer}>
-                                <Text style={[styles.habitTitle, isCompleted(habit.completedDates, habit.repeatType) && styles.completedText]}>{habit.title}</Text>
-                                <Text style={styles.streakText}>🔥 {habit.streak} Yıl</Text>
-                            </View>
-                            <TouchableOpacity style={styles.checkbox} onPress={() => toggleHabitCompletion(habit)}>
-                                {isCompleted(habit.completedDates, habit.repeatType) ? (
-                                    <Ionicons name="checkbox" size={32} color={COLORS.success} />
-                                ) : (
-                                    <Ionicons name="square-outline" size={32} color={COLORS.textSecondary} />
-                                )}
-                            </TouchableOpacity>
-                        </View>
-                        <View style={styles.heatmapContainer}>
-                            {Array.from({ length: 12 }, (_, monthIndex) => {
-                                const daysInMonth = new Date(currentYear, monthIndex + 1, 0).getDate();
-                                return (
-                                    <View key={monthIndex} style={styles.monthRow}>
-                                        <Text style={styles.monthLabel}>{monthNamesShort[monthIndex]}</Text>
-                                        <View style={styles.heatmapGrid}>
-                                            {Array.from({ length: daysInMonth }, (_, dayIndex) => (
-                                                <View key={dayIndex} style={[styles.heatmapCell, { backgroundColor: '#333' }]} />
-                                            ))}
+                            <View style={styles.heatmapContainer}>
+                                {Array.from({ length: 12 }, (_, monthIndex) => {
+                                    const daysInMonth = new Date(currentYear, monthIndex + 1, 0).getDate();
+                                    return (
+                                        <View key={monthIndex} style={styles.monthRow}>
+                                            <Text style={styles.monthLabel}>{monthNamesShort[monthIndex]}</Text>
+                                            <View style={styles.heatmapGrid}>
+                                                {Array.from({ length: daysInMonth }, (_, dayIndex) => (
+                                                    <View key={dayIndex} style={[styles.heatmapCell, { backgroundColor: '#333' }]} />
+                                                ))}
+                                            </View>
                                         </View>
-                                    </View>
-                                );
-                            })}
+                                    );
+                                })}
+                            </View>
                         </View>
-                    </View>
-                ))}
+                    )
+                })}
             </ScrollView>
         );
     };
