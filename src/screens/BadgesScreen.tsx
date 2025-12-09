@@ -7,6 +7,7 @@ import { auth, db } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
 import { BADGES } from '../constants/gamification';
+import { isAdmin } from '../utils/adminUtils';
 
 export const BadgesScreen = ({ navigation }: any) => {
     const [earnedBadgeIds, setEarnedBadgeIds] = useState<string[]>([]);
@@ -38,7 +39,7 @@ export const BadgesScreen = ({ navigation }: any) => {
     }, [user]);
 
     const renderItem = ({ item }: { item: typeof BADGES[0] }) => {
-        const isUnlocked = earnedBadgeIds.includes(item.id);
+        const isUnlocked = earnedBadgeIds.includes(item.id) || isAdmin(user);
 
         return (
             <View style={[styles.card, !isUnlocked && styles.lockedCard]}>
