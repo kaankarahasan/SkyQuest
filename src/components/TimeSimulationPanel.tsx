@@ -1,6 +1,7 @@
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import React, { useState } from 'react';
 import { Alert, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { auth } from '../../firebaseConfig';
+import { auth, db } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
 import { useTime } from '../context/TimeContext';
@@ -16,30 +17,45 @@ export const TimeSimulationPanel = ({ visible, onClose }: TimeSimulationPanelPro
     const [loading, setLoading] = useState(false);
     const [scenario, setScenario] = useState<'success' | 'failure'>('success'); // Default to success
 
-    const handleSimulation = async (months: number, label: string) => {
+    const handleSimulation = async (days: number, label: string) => {
         if (!auth.currentUser) return;
 
         setLoading(true);
         try {
-            const realNow = new Date(); // Always start from real now for offset calculation? 
-            // Or add to current simulated time? 
-            // "Select how far in advance they want to go from today's date" -> implies from Real Today usually.
-            // Let's assume strict jumps from *Real Now* for simplicity and consistency.
+            // Ensure User Profile Exists (Fix for Permission Error on missing doc)
+            const userRef = doc(db, 'users', auth.currentUser.uid);
+            const userSnap = await getDoc(userRef).catch(() => null);
 
-            const targetDate = new Date(realNow);
-            targetDate.setMonth(realNow.getMonth() + months);
+            if (!userSnap || !userSnap.exists()) {
+                await setDoc(userRef, {
+                    uid: auth.currentUser.uid,
+                    email: auth.currentUser.email || '',
+                    displayName: auth.currentUser.displayName || 'Admin',
+                    points: 0,
+                    level: 1,
+                    earnedBadgeIds: [],
+                    totalCompletions: 0
+                }, { merge: true });
+            }
 
+            const realNow = new Date();
+            // Start from the CURRENT SIMULATED DATE (Cumulative)
+            const startDate = new Date(currentDate);
+
+            const targetDate = new Date(startDate);
+            targetDate.setDate(startDate.getDate() + days);
+
+            // Calculate offset relative to real now
             const offset = targetDate.getTime() - realNow.getTime();
 
-            // 1. Simulate Data with selected Scenario
-            await simulateUsage(targetDate, auth.currentUser.uid, scenario);
+            // 1. Simulate Data
+            await simulateUsage(startDate, targetDate, auth.currentUser.uid, scenario);
 
             // 2. Travel Time
             simulateTimeTravel(offset);
 
-            // Descriptive success message
             const scenarioText = scenario === 'success' ? 'Başarılı (Tüm Alışkanlıklar Yapıldı)' : 'Başarısız (Hiçbir Şey Yapılmadı)';
-            Alert.alert("Simülasyon Tamamlandı", `${label} ileri gidildi.\nSenaryo: ${scenarioText}`);
+            Alert.alert("Simülasyon Tamamlandı", `${label} ileri gidildi.\nSenaryo: ${scenarioText}\nYeni Tarih: ${targetDate.toLocaleDateString('tr-TR')}`);
 
             onClose();
         } catch (error) {
@@ -89,9 +105,27 @@ export const TimeSimulationPanel = ({ visible, onClose }: TimeSimulationPanelPro
                     </Text>
 
                     <View style={styles.buttonContainer}>
+                        <View style={styles.row}>
+                            <TouchableOpacity
+                                style={[styles.button, styles.halfButton, loading && styles.disabledButton]}
+                                onPress={() => handleSimulation(1, '1 Gün')}
+                                disabled={loading}
+                            >
+                                <Text style={styles.buttonText}>+1 Gün</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.button, styles.halfButton, loading && styles.disabledButton]}
+                                onPress={() => handleSimulation(7, '1 Hafta')}
+                                disabled={loading}
+                            >
+                                <Text style={styles.buttonText}>+1 Hafta</Text>
+                            </TouchableOpacity>
+                        </View>
+
                         <TouchableOpacity
                             style={[styles.button, loading && styles.disabledButton]}
-                            onPress={() => handleSimulation(1, '30 Gün')}
+                            onPress={() => handleSimulation(30, '30 Gün')}
                             disabled={loading}
                         >
                             <Text style={styles.buttonText}>+30 Gün (1 Ay)</Text>
@@ -99,7 +133,7 @@ export const TimeSimulationPanel = ({ visible, onClose }: TimeSimulationPanelPro
 
                         <TouchableOpacity
                             style={[styles.button, loading && styles.disabledButton]}
-                            onPress={() => handleSimulation(6, '6 Ay')}
+                            onPress={() => handleSimulation(180, '6 Ay')}
                             disabled={loading}
                         >
                             <Text style={styles.buttonText}>+6 Ay</Text>
@@ -107,7 +141,7 @@ export const TimeSimulationPanel = ({ visible, onClose }: TimeSimulationPanelPro
 
                         <TouchableOpacity
                             style={[styles.button, loading && styles.disabledButton]}
-                            onPress={() => handleSimulation(12, '1 Yıl')}
+                            onPress={() => handleSimulation(365, '1 Yıl')}
                             disabled={loading}
                         >
                             <Text style={styles.buttonText}>+1 Yıl</Text>
@@ -217,12 +251,20 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         gap: 10,
     },
+    row: {
+        flexDirection: 'row',
+        gap: 10,
+        width: '100%',
+    },
     button: {
         backgroundColor: COLORS.primary,
         padding: 15,
         borderRadius: 12,
         alignItems: 'center',
         width: '100%',
+    },
+    halfButton: {
+        flex: 1,
     },
     disabledButton: {
         backgroundColor: '#555',

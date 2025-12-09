@@ -4,15 +4,14 @@ import { Habit, User } from '../types';
 import { calculateLevel, checkBadges } from './gamificationUtils';
 import { getCompletionKey } from './habitUtils';
 
-export const simulateUsage = async (targetDate: Date, userId: string, scenario: 'success' | 'failure'): Promise<void> => {
+export const simulateUsage = async (startDate: Date, targetDate: Date, userId: string, scenario: 'success' | 'failure'): Promise<void> => {
     // 1. Get all user habits
     const q = query(collection(db, 'habits'), where('userId', '==', userId));
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) return;
 
-    const realNow = new Date();
-    if (targetDate <= realNow) return;
+    if (targetDate <= startDate) return;
 
     // Use a transaction to ensure User points and Habit completions stay in sync
     await runTransaction(db, async (transaction) => {
@@ -34,9 +33,11 @@ export const simulateUsage = async (targetDate: Date, userId: string, scenario: 
             const completedDates = new Set(habit.completedDates || []);
             let currentStreak = habit.streak || 0;
 
-            const currentDate = new Date(realNow);
+            // Start from the provided startDate
+            const currentDate = new Date(startDate);
 
-            while (currentDate <= targetDate) {
+            // Loop strictly LESS THAN targetDate to leave the target day "fresh"
+            while (currentDate < targetDate) {
                 const key = getCompletionKey(currentDate, habit.repeatType);
                 const pointsValue = habit.focusHabitEnabled ? 3 : 1;
 
@@ -46,9 +47,6 @@ export const simulateUsage = async (targetDate: Date, userId: string, scenario: 
                         completedDates.add(key);
                         totalNewPoints += pointsValue;
                         totalNewCompletions += 1;
-                        // Simple streak increment for daily simulation
-                        // For more complex streak logic, we might need calculateStreak logic, 
-                        // but for simulation, incrementing is consistent with "doing it every day/period"
                         currentStreak += 1;
                     }
                 } else {
@@ -68,7 +66,7 @@ export const simulateUsage = async (targetDate: Date, userId: string, scenario: 
                 ref: habitDoc.ref,
                 data: {
                     completedDates: Array.from(completedDates),
-                    streak: currentStreak // Ideally logic should recalculate this, but for Success mode, increment works.
+                    streak: currentStreak
                 }
             });
         });
