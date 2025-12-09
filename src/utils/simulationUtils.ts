@@ -4,14 +4,16 @@ import { Habit, User } from '../types';
 import { calculateLevel, checkBadges } from './gamificationUtils';
 import { getCompletionKey } from './habitUtils';
 
-export const simulateUsage = async (startDate: Date, targetDate: Date, userId: string, scenario: 'success' | 'failure'): Promise<void> => {
+export const simulateUsage = async (startDate: Date, targetDate: Date, userId: string, scenario: 'success' | 'failure'): Promise<{ pointsChanged: number; penaltiesApplied: number; notificationsSent: number }> => {
     // 1. Get all user habits
     const q = query(collection(db, 'habits'), where('userId', '==', userId));
     const querySnapshot = await getDocs(q);
 
-    if (querySnapshot.empty) return;
+    if (querySnapshot.empty) return { pointsChanged: 0, penaltiesApplied: 0, notificationsSent: 0 };
 
-    if (targetDate <= startDate) return;
+    if (targetDate <= startDate) return { pointsChanged: 0, penaltiesApplied: 0, notificationsSent: 0 };
+
+    let simulationStats = { pointsChanged: 0, penaltiesApplied: 0, notificationsSent: 0 };
 
     // Use a transaction to ensure User points and Habit completions stay in sync
     await runTransaction(db, async (transaction) => {
@@ -21,6 +23,9 @@ export const simulateUsage = async (startDate: Date, targetDate: Date, userId: s
 
         if (!userDoc.exists()) throw new Error("User not found");
         let userData = userDoc.data() as User;
+
+        // Track current points locally to prevent negative score during simulation day-by-day
+        let currentTotalPoints = userData.points || 0;
 
         let totalNewPoints = 0;
         let totalNewCompletions = 0;
@@ -48,13 +53,37 @@ export const simulateUsage = async (startDate: Date, targetDate: Date, userId: s
                         totalNewPoints += pointsValue;
                         totalNewCompletions += 1;
                         currentStreak += 1;
+                        currentTotalPoints += pointsValue;
                     }
                 } else {
-                    // In FAILURE mode, we do NOTHING.
-                    // Apps streak calculation will naturally see gaps and reset to 0 when loaded.
-                    // We don't need to manually reset currentStreak here because calculateStreak(localHabit.completedDates) 
-                    // in UI will return 0 if recent dates are missing.
-                    // However, we SHOULD NOT add any completions.
+                    // In FAILURE mode
+                    // Check logic: If missed habit
+                    // Since we are in Failure mode, we assume missed.
+                    // But we should only penalize if it was a valid day for the habit (e.g. daily vs weekly)
+                    // For Daily habits: Every day is a due day.
+                    // For now assuming Daily for simplicity or that simple daily check is enough.
+
+                    if (currentStreak >= 3) {
+                        currentStreak = 0;
+                        // Apply Penalty
+                        if (currentTotalPoints > 0) {
+                            // Deduct 2, but max deduction is current points (don't go negative)
+                            const deduction = Math.min(2, currentTotalPoints);
+                            totalNewPoints -= deduction;
+                            currentTotalPoints -= deduction;
+                            simulationStats.penaltiesApplied += 1;
+                        }
+                    } else {
+                        // Just reset streak (no penalty)
+                        // Notification logic: If they had some streak (e.g. 1 or 2) and lost it? 
+                        // Or just if they miss it?
+                        // User said: "If they don't [have streak >= 3], show a notification."
+                        // This implies notifications happen on miss when streak < 3.
+                        if (currentStreak > 0) {
+                            currentStreak = 0;
+                        }
+                        simulationStats.notificationsSent += 1;
+                    }
                 }
 
                 // Advance one day
@@ -71,13 +100,14 @@ export const simulateUsage = async (startDate: Date, targetDate: Date, userId: s
             });
         });
 
-        // Apply Gamification Updates (only relevant for Success)
+        // Apply Gamification Updates
+        // Note: totalNewPoints can be negative in failure mode
         let updatedUser = { ...userData };
-        if (scenario === 'success') {
-            const finalPoints = (userData.points || 0) + totalNewPoints;
-            const finalTotalCompletions = (userData.totalCompletions || 0) + totalNewCompletions;
-            const { level, title } = calculateLevel(finalPoints);
+        const finalPoints = Math.max(0, (userData.points || 0) + totalNewPoints);
+        const finalTotalCompletions = (userData.totalCompletions || 0) + totalNewCompletions;
+        const { level, title } = calculateLevel(finalPoints);
 
+        if (scenario === 'success') {
             updatedUser = {
                 ...userData,
                 points: finalPoints,
@@ -85,27 +115,28 @@ export const simulateUsage = async (startDate: Date, targetDate: Date, userId: s
                 totalCompletions: finalTotalCompletions,
                 earnedBadgeIds: Array.from(newEarnedBadges)
             };
-
-            // Check Badges based on new state
-            // We pass a dummy habitData for badge checks that might depend on single habit streak.
-            // But since 'checkBadges' iterates BADGES, and some depend on 'habitData.streak', 
-            // we should technically check per habit. 
-            // For simplicity in simulation:
-            // 1. User-level badges (Points, Level, TotalCompletions) will be caught here.
-            // 2. Habit-streak badges might be missed if we don't pass specific habit data.
-            // Let's do a generic check.
-            const unlockedUserBadges = checkBadges(updatedUser, { streak: 30 }); // Assume massive streak for success
+            const unlockedUserBadges = checkBadges(updatedUser, { streak: 30 });
             const allBadges = new Set([...updatedUser.earnedBadgeIds, ...unlockedUserBadges]);
             updatedUser.earnedBadgeIds = Array.from(allBadges);
+        } else {
+            // Failure Mode updates (only points/level might drop, badges usually stay?)
+            // User didn't specify losing badges/levels.
+            updatedUser = {
+                ...userData,
+                points: finalPoints,
+                level
+            };
         }
 
+        simulationStats.pointsChanged = totalNewPoints;
+
         // Commit Updates
-        // 1. Update User
         transaction.update(userRef, updatedUser);
 
-        // 2. Update Habits
         habitsToUpdate.forEach((h) => {
             transaction.update(h.ref, h.data);
         });
     });
+
+    return simulationStats;
 };

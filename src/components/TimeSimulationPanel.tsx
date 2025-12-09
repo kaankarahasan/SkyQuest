@@ -49,13 +49,29 @@ export const TimeSimulationPanel = ({ visible, onClose }: TimeSimulationPanelPro
             const offset = targetDate.getTime() - realNow.getTime();
 
             // 1. Simulate Data
-            await simulateUsage(startDate, targetDate, auth.currentUser.uid, scenario);
+            const stats = await simulateUsage(startDate, targetDate, auth.currentUser.uid, scenario);
 
             // 2. Travel Time
             simulateTimeTravel(offset);
 
-            const scenarioText = scenario === 'success' ? 'Başarılı (Tüm Alışkanlıklar Yapıldı)' : 'Başarısız (Hiçbir Şey Yapılmadı)';
-            Alert.alert("Simülasyon Tamamlandı", `${label} ileri gidildi.\nSenaryo: ${scenarioText}\nYeni Tarih: ${targetDate.toLocaleDateString('tr-TR')}`);
+            let message = `${label} ileri gidildi.\nYeni Tarih: ${targetDate.toLocaleDateString('tr-TR')}`;
+
+            if (scenario === 'success') {
+                message += `\n\nSenaryo: Başarılı\nKazanılan Puan: ${stats.pointsChanged}`;
+            } else {
+                message += `\n\nSenaryo: Başarısız`;
+                if (stats.penaltiesApplied > 0) {
+                    message += `\nCezalar: ${stats.penaltiesApplied} kez streak bozuldu (-${Math.abs(stats.pointsChanged)} puan).`;
+                }
+                if (stats.notificationsSent > 0) {
+                    message += `\nBildirimler: ${stats.notificationsSent} kez motivasyon bildirimi gönderildi.`;
+                }
+                if (stats.penaltiesApplied === 0 && stats.notificationsSent === 0) {
+                    message += `\n(Herhangi bir ceza veya bildirim oluşmadı)`;
+                }
+            }
+
+            Alert.alert("Simülasyon Tamamlandı", message);
 
             onClose();
         } catch (error) {
