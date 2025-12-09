@@ -1,19 +1,43 @@
 import { Ionicons } from '@expo/vector-icons';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import React, { useState } from 'react';
-import { Modal, StyleSheet, Text, View } from 'react-native';
+import { Alert, Modal, StyleSheet, Text, View } from 'react-native';
+import { auth } from '../../firebaseConfig';
 import { AuthLayout } from '../components/AuthLayout';
 import { CustomButton } from '../components/CustomButton';
 import { CustomInput } from '../components/CustomInput';
 import { COLORS } from '../constants/colors';
+import { FONTS } from '../constants/fonts';
 
 export const ForgotPasswordScreen = ({ navigation }: any) => {
     const [email, setEmail] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSend = () => {
-        // TODO: Implement Firebase Password Reset
-        console.log('Send pressed', { email });
-        setModalVisible(true);
+    const handleSend = async () => {
+        if (!email) {
+            Alert.alert('Hata', 'Lütfen e-posta adresinizi giriniz.');
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            await sendPasswordResetEmail(auth, email);
+            setModalVisible(true);
+        } catch (error: any) {
+            console.error('Password reset error:', error);
+            let errorMessage = 'Şifre sıfırlama e-postası gönderilirken bir hata oluştu.';
+            if (error.code === 'auth/invalid-email') {
+                errorMessage = 'Geçersiz e-posta adresi.';
+            } else if (error.code === 'auth/user-not-found') {
+                // For security reasons, sometimes it's better not to say "user not found", 
+                // but for this app "User not found" might be acceptable or just generic message.
+                errorMessage = 'Bu e-posta adresiyle kayıtlı kullanıcı bulunamadı.';
+            }
+            Alert.alert('Hata', errorMessage);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -29,16 +53,25 @@ export const ForgotPasswordScreen = ({ navigation }: any) => {
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
+                keyboardType="email-address"
             />
 
-            <CustomButton title="Gönder" onPress={handleSend} variant="secondary" />
+            <CustomButton
+                title={isLoading ? "Gönderiliyor..." : "Gönder"}
+                onPress={handleSend}
+                variant="secondary"
+                disabled={isLoading}
+            />
 
             {/* Success Modal */}
             <Modal
                 animationType="fade"
                 transparent={true}
                 visible={modalVisible}
-                onRequestClose={() => setModalVisible(false)}
+                onRequestClose={() => {
+                    setModalVisible(false);
+                    navigation.navigate('Login');
+                }}
             >
                 <View style={styles.centeredView}>
                     <View style={styles.modalView}>
@@ -48,10 +81,10 @@ export const ForgotPasswordScreen = ({ navigation }: any) => {
                             Lütfen e-postanı kontrol et ve şifreni güvenli bir şekilde sıfırlamak için bağlantıyı takip et.
                         </Text>
                         <CustomButton
-                            title="E-postayı Kontrol Et"
+                            title="Giriş Yap"
                             onPress={() => {
                                 setModalVisible(false);
-                                navigation.navigate('ResetPassword'); // For demo flow, normally this happens via email link
+                                navigation.navigate('Login');
                             }}
                         />
                     </View>
@@ -93,10 +126,13 @@ const styles = StyleSheet.create({
         color: COLORS.white,
         marginBottom: 15,
         textAlign: 'center',
+        fontFamily: FONTS.bold,
     },
     modalText: {
         marginBottom: 20,
         textAlign: 'center',
         color: COLORS.white,
+        fontFamily: FONTS.regular,
+        fontSize: 16,
     },
 });

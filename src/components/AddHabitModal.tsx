@@ -153,7 +153,7 @@ export const AddHabitModal = ({ visible, onClose, initialData, onDelete }: AddHa
                         <View style={styles.emojiContainer}>
                             <TouchableOpacity onPress={() => setEmojiPickerVisible(true)}>
                                 <View style={styles.emojiPlaceholder}>
-                                    <Text style={{ fontSize: 40 }}>{selectedEmoji}</Text>
+                                    <Text style={{ fontSize: 40, fontFamily: FONTS.regular }}>{selectedEmoji}</Text>
                                 </View>
                             </TouchableOpacity>
                         </View>
@@ -592,6 +592,7 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         fontSize: 16,
         fontWeight: 'bold',
+        fontFamily: FONTS.bold,
     },
     deleteButton: {
         backgroundColor: '#8B4513', // Brown color
@@ -604,6 +605,7 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         fontSize: 18,
         fontWeight: 'bold',
+        fontFamily: FONTS.bold,
     },
     inputText: {
         color: COLORS.text,
