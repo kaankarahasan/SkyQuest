@@ -178,7 +178,7 @@ export const AddHabitModal = ({ visible, onClose, initialData, onDelete }: AddHa
                             style={[styles.input, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}
                             onPress={() => setCategoryModalVisible(true)}
                         >
-                            <Text style={category ? styles.inputText : styles.placeholderText}>
+                            <Text style={[category ? styles.inputText : styles.placeholderText, { flex: 1, paddingRight: 10 }]}>
                                 {category || "Kategori Seç"}
                             </Text>
                             <Ionicons name="chevron-down" size={20} color={COLORS.textSecondary} />
@@ -608,10 +608,12 @@ const styles = StyleSheet.create({
     inputText: {
         color: COLORS.text,
         fontSize: 16,
+        fontFamily: FONTS.regular,
     },
     placeholderText: {
         color: COLORS.textSecondary,
         fontSize: 16,
+        fontFamily: FONTS.regular,
     },
     categoryOption: {
         flexDirection: 'row',
@@ -625,6 +627,7 @@ const styles = StyleSheet.create({
     categoryOptionText: {
         color: COLORS.text,
         fontSize: 16,
+        fontFamily: FONTS.regular,
     },
     resetButtonContainer: {
         marginTop: 10,
@@ -637,5 +640,6 @@ const styles = StyleSheet.create({
         color: COLORS.error,
         fontSize: 16,
         fontWeight: 'bold',
+        fontFamily: FONTS.bold,
     },
 });

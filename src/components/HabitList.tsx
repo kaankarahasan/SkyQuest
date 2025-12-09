@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { collection, doc, onSnapshot, query, runTransaction, updateDoc, where } from 'firebase/firestore';
 import React from 'react';
-import { Alert, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
@@ -12,6 +12,33 @@ import { calculateStreak, getCompletionKey, isCompleted } from '../utils/habitUt
 interface HabitListProps {
     activeTab: RepeatType;
 }
+
+const GlowOverlay = ({ active, color }: { active: boolean, color: string }) => {
+    const opacity = React.useRef(new Animated.Value(0)).current;
+
+    React.useEffect(() => {
+        if (active) {
+            Animated.sequence([
+                Animated.timing(opacity, { toValue: 0.5, duration: 300, useNativeDriver: true }),
+                Animated.timing(opacity, { toValue: 0, duration: 500, useNativeDriver: true })
+            ]).start();
+        }
+    }, [active]);
+
+    return (
+        <Animated.View
+            style={[
+                StyleSheet.absoluteFill,
+                {
+                    backgroundColor: color || COLORS.primary,
+                    opacity: opacity,
+                    borderRadius: 12,
+                    pointerEvents: 'none'
+                }
+            ]}
+        />
+    );
+};
 
 export const HabitList = ({ activeTab }: HabitListProps) => {
     const [habits, setHabits] = React.useState<Habit[]>([]);
@@ -228,6 +255,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
 
         return (
             <View style={[styles.card, { borderColor: showBorder ? item.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
+                <GlowOverlay active={completed} color={item.color} />
                 <View style={styles.iconContainer}>
                     <Text style={{ fontSize: 24 }}>{item.icon}</Text>
                 </View>
@@ -292,6 +320,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
 
                 return (
                     <View key={habit.id} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
+                        <GlowOverlay active={completed} color={habit.color} />
                         <View style={styles.habitHeader}>
                             <View style={styles.iconContainer}>
                                 <Text style={{ fontSize: 24 }}>{habit.icon}</Text>
@@ -360,6 +389,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                     const showBorder = !completed || (completed && habit.focusHabitEnabled);
                     return (
                         <View key={habit.id} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
+                            <GlowOverlay active={completed} color={habit.color} />
                             <View style={styles.habitHeader}>
                                 <View style={styles.iconContainer}>
                                     <Text style={{ fontSize: 24 }}>{habit.icon}</Text>
@@ -405,6 +435,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                     const showBorder = !completed || (completed && habit.focusHabitEnabled);
                     return (
                         <View key={habit.id} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
+                            <GlowOverlay active={completed} color={habit.color} />
                             <View style={styles.habitHeader}>
                                 <View style={styles.iconContainer}>
                                     <Text style={{ fontSize: 24 }}>{habit.icon}</Text>

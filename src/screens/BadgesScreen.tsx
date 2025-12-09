@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         fontSize: 20,
         fontWeight: 'bold',
-        fontFamily: FONTS.headingBold,
+        fontFamily: FONTS.bold,
     },
     listContent: {
         padding: 16,

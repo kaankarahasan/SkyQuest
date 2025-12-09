@@ -47,7 +47,7 @@ export const RulesScreen = ({ navigation }: any) => {
                     <View style={styles.ruleItem}>
                         <Text style={styles.bullet}>•</Text>
                         <Text style={styles.ruleText}>
-                            Bir alışkanlığı Odak Görevi olarak belirlersen, tamamladığında normal puanına ek %50 daha fazla puan alırsın.
+                            Bir alışkanlığı Odak Görevi olarak belirlersen, tamamladığında normal puanına ek 2 puan daha fazla puan alırsın.
                         </Text>
                     </View>
                 </ScrollView>
@@ -81,10 +81,12 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         textAlign: 'center',
         flex: 1,
-        fontFamily: FONTS.headingBold,
+        fontFamily: FONTS.bold,
     },
     content: {
         padding: 24,
+        flexGrow: 1,
+        justifyContent: 'center',
     },
     ruleItem: {
         flexDirection: 'row',
@@ -92,14 +94,14 @@ const styles = StyleSheet.create({
     },
     bullet: {
         color: COLORS.text,
-        fontSize: 24,
+        fontSize: 28,
         marginRight: 12,
         marginTop: -4, // Adjust alignment
     },
     ruleText: {
         color: COLORS.text,
-        fontSize: 18,
-        lineHeight: 26,
+        fontSize: 22,
+        lineHeight: 32,
         flex: 1,
         fontFamily: FONTS.regular,
     },

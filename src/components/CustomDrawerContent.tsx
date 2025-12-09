@@ -43,7 +43,7 @@ export const CustomDrawerContent = (props: any) => {
                     <TouchableOpacity style={styles.menuItem} onPress={() => props.navigation.navigate('HabitsList')}>
                         <View style={styles.menuItemLeft}>
                             <Ionicons name="list-outline" size={24} color={COLORS.text} />
-                            <Text style={styles.menuItemText}>ALIŞKANLIKLAR LİSTESİ</Text>
+                            <Text style={styles.menuItemText}>ALIŞKANLIKLAR{'\n'} LİSTESİ</Text>
                         </View>
                         <Ionicons name="arrow-forward" size={24} color={COLORS.text} />
                     </TouchableOpacity>
@@ -59,7 +59,7 @@ export const CustomDrawerContent = (props: any) => {
                     <TouchableOpacity style={styles.menuItem} onPress={() => props.navigation.navigate('Rules')}>
                         <View style={styles.menuItemLeft}>
                             <Ionicons name="hammer-outline" size={24} color="#D2B48C" />
-                            <Text style={styles.menuItemText}>SKYQUEST KURAL KİTABI</Text>
+                            <Text style={styles.menuItemText}>SKYQUEST KURAL{'\n'}KİTABI</Text>
                         </View>
                         <Ionicons name="arrow-forward" size={24} color={COLORS.text} />
                     </TouchableOpacity>
@@ -119,6 +119,8 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginLeft: 12,
         fontFamily: FONTS.bold,
+        flex: 1,
+        flexWrap: 'wrap',
     },
     footer: {
         padding: 20,
