@@ -40,6 +40,43 @@ const GlowOverlay = ({ active, color }: { active: boolean, color: string }) => {
     );
 };
 
+const FlashingView = ({ children, active, style }: { children: React.ReactNode, active?: boolean, style?: any }) => {
+    const opacity = React.useRef(new Animated.Value(1)).current;
+
+    React.useEffect(() => {
+        let animation: any;
+        if (active) {
+            animation = Animated.loop(
+                Animated.sequence([
+                    Animated.timing(opacity, {
+                        toValue: 0.6,
+                        duration: 800,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(opacity, {
+                        toValue: 1,
+                        duration: 800,
+                        useNativeDriver: true,
+                    }),
+                ])
+            );
+            animation.start();
+        } else {
+            opacity.setValue(1);
+        }
+
+        return () => {
+            if (animation) animation.stop();
+        };
+    }, [active]);
+
+    return (
+        <Animated.View style={[style, { opacity }]}>
+            {children}
+        </Animated.View>
+    );
+};
+
 export const HabitList = ({ activeTab }: HabitListProps) => {
     const [habits, setHabits] = React.useState<Habit[]>([]);
     const [loading, setLoading] = React.useState(true);
@@ -79,6 +116,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                     streak: calculateStreak(data.completedDates || [], data.repeatType),
                     category: data.category,
                     focusHabitEnabled: data.focusHabitEnabled,
+                    reminderEnabled: data.reminderEnabled,
                 });
             });
             setHabits(habitsData);
@@ -254,7 +292,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
         const showBorder = !completed || (completed && item.focusHabitEnabled);
 
         return (
-            <View style={[styles.card, { borderColor: showBorder ? item.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
+            <FlashingView active={item.reminderEnabled} style={[styles.card, { borderColor: showBorder ? item.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
                 <GlowOverlay active={completed} color={item.color} />
                 <View style={styles.iconContainer}>
                     <Text style={{ fontSize: 24 }}>{item.icon}</Text>
@@ -271,7 +309,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                         <Ionicons name="square-outline" size={32} color={COLORS.textSecondary} />
                     )}
                 </TouchableOpacity>
-            </View>
+            </FlashingView>
         );
     };
 
@@ -319,7 +357,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                 const isDayAllowed = habit.selectedDays && habit.selectedDays.includes(currentDayIndex);
 
                 return (
-                    <View key={habit.id} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
+                    <FlashingView key={habit.id} active={habit.reminderEnabled} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
                         <GlowOverlay active={completed} color={habit.color} />
                         <View style={styles.habitHeader}>
                             <View style={styles.iconContainer}>
@@ -368,7 +406,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                                 )
                             })}
                         </View>
-                    </View>
+                    </FlashingView>
                 )
             })}
         </ScrollView>
@@ -388,7 +426,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                     const completed = isCompleted(habit.completedDates, habit.repeatType);
                     const showBorder = !completed || (completed && habit.focusHabitEnabled);
                     return (
-                        <View key={habit.id} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
+                        <FlashingView key={habit.id} active={habit.reminderEnabled} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
                             <GlowOverlay active={completed} color={habit.color} />
                             <View style={styles.habitHeader}>
                                 <View style={styles.iconContainer}>
@@ -416,7 +454,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                                     ))}
                                 </View>
                             </View>
-                        </View>
+                        </FlashingView>
                     )
                 })}
             </ScrollView>
@@ -434,7 +472,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                     const completed = isCompleted(habit.completedDates, habit.repeatType);
                     const showBorder = !completed || (completed && habit.focusHabitEnabled);
                     return (
-                        <View key={habit.id} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
+                        <FlashingView key={habit.id} active={habit.reminderEnabled} style={[styles.weeklyCard, { borderColor: showBorder ? habit.color : 'transparent', borderWidth: showBorder ? 2 : 0 }]}>
                             <GlowOverlay active={completed} color={habit.color} />
                             <View style={styles.habitHeader}>
                                 <View style={styles.iconContainer}>
@@ -467,7 +505,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                                     );
                                 })}
                             </View>
-                        </View>
+                        </FlashingView>
                     )
                 })}
             </ScrollView>

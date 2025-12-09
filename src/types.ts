@@ -14,6 +14,7 @@ export interface Habit {
     streak: number;
     category: string;
     focusHabitEnabled?: boolean;
+    reminderEnabled?: boolean;
 }
 
 export interface User {
