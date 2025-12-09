@@ -128,8 +128,17 @@ const decrementDate = (date: Date, frequency: RepeatType) => {
         case 'Monthly':
             date.setMonth(date.getMonth() - 1);
             break;
-        case 'Yearly':
             date.setFullYear(date.getFullYear() - 1);
             break;
+    }
+};
+
+export const getStreakUnit = (repeatType: string) => {
+    switch (repeatType) {
+        case 'Daily': return 'Gün';
+        case 'Weekly': return 'Hafta';
+        case 'Monthly': return 'Ay';
+        case 'Yearly': return 'Yıl';
+        default: return 'Gün';
     }
 };

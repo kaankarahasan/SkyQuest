@@ -7,6 +7,7 @@ import { auth, db } from '../../firebaseConfig';
 import { AddHabitModal } from '../components/AddHabitModal';
 import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
+import { getStreakUnit } from '../utils/habitUtils';
 
 // Mock Data
 // Mock Data removed
@@ -72,7 +73,7 @@ export const HabitsListScreen = ({ navigation }: any) => {
             </View>
             <View style={styles.infoContainer}>
                 <Text style={styles.title}>{item.title}</Text>
-                <Text style={styles.streak}>🔥 {item.streak} Gün</Text>
+                <Text style={styles.streak}>🔥 {item.streak} {getStreakUnit(item.repeatType)}</Text>
             </View>
             <TouchableOpacity onPress={() => handleEdit(item)}>
                 <Ionicons name="create-outline" size={32} color={COLORS.text} />
@@ -87,8 +88,8 @@ export const HabitsListScreen = ({ navigation }: any) => {
                     <Ionicons name="chevron-back" size={28} color={COLORS.text} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>ALIŞKANLIKLAR LİSTESİ</Text>
-                <TouchableOpacity onPress={() => setModalVisible(true)}>
-                    <Ionicons name="add" size={28} color={COLORS.text} />
+                <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.addButton}>
+                    <Ionicons name="add" size={24} color={COLORS.text} />
                 </TouchableOpacity>
             </View>
 
@@ -166,9 +167,16 @@ const styles = StyleSheet.create({
         padding: 40,
     },
     emptyText: {
-        color: COLORS.textSecondary,
-        fontSize: 16,
         textAlign: 'center',
         fontFamily: FONTS.regular,
+    },
+    addButton: {
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 8,
+        borderWidth: 1.5,
+        borderColor: COLORS.text,
     },
 });

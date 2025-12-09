@@ -8,7 +8,24 @@ import { FONTS } from '../constants/fonts';
 import { useTime } from '../context/TimeContext';
 import { Habit, RepeatType, User } from '../types';
 import { calculateLevel, checkBadges } from '../utils/gamificationUtils';
-import { calculateStreak, getCompletionKey, isCompleted } from '../utils/habitUtils';
+import { calculateStreak, getCompletionKey, getStreakUnit, isCompleted } from '../utils/habitUtils';
+
+// ... (rest of imports are fine, but I need to target the start of the file for the import)
+// Wait, I can't target multiple non-contiguous blocks easily with one chunk if the gap is huge.
+// I will just use multiple chunks.
+
+// Chunk 1: Import
+// Chunk 2: renderItem
+// Chunk 3: renderWeekly
+// Chunk 4: renderMonthly
+// Chunk 5: renderYearly
+
+// Actually I can just do MultiReplace. But this tool is ReplaceFileContent.
+// I should use MultiReplace.
+// Wait, I am restricted to use ReplaceFileContent if I am editing a single contiguous block? No.
+// "Use this tool ONLY when you are making a SINGLE CONTIGUOUS block of edits".
+// So I must use MultiReplace for this.
+
 
 interface HabitListProps {
     activeTab: RepeatType;
@@ -302,7 +319,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                 <View style={styles.infoContainer}>
                     <Text style={[styles.habitTitle, completed && styles.completedText]}>{item.title}</Text>
                     <Text style={styles.habitDescription}>{item.description}</Text>
-                    <Text style={styles.streakText}>🔥 {item.streak} {item.repeatType === 'Daily' ? 'Gün' : item.repeatType === 'Weekly' ? 'Hafta' : item.repeatType === 'Monthly' ? 'Ay' : 'Yıl'}</Text>
+                    <Text style={styles.streakText}>🔥 {item.streak} {getStreakUnit(item.repeatType)}</Text>
                 </View>
                 <TouchableOpacity style={styles.checkbox} onPress={() => toggleHabitCompletion(item)}>
                     {completed ? (
@@ -367,7 +384,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                             </View>
                             <View style={styles.infoContainer}>
                                 <Text style={[styles.habitTitle, completed && styles.completedText]}>{habit.title}</Text>
-                                <Text style={styles.streakText}>🔥 {habit.streak} Hafta</Text>
+                                <Text style={styles.streakText}>🔥 {habit.streak} {getStreakUnit(habit.repeatType)}</Text>
                             </View>
                             <TouchableOpacity
                                 style={[styles.checkbox, !isDayAllowed && { opacity: 0.3 }]}
@@ -437,7 +454,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                                 </View>
                                 <View style={styles.infoContainer}>
                                     <Text style={[styles.habitTitle, isCompleted(habit.completedDates, habit.repeatType, currentDate) && styles.completedText]}>{habit.title}</Text>
-                                    <Text style={styles.streakText}>🔥 {habit.streak} Ay</Text>
+                                    <Text style={styles.streakText}>🔥 {habit.streak} {getStreakUnit(habit.repeatType)}</Text>
                                 </View>
                                 <TouchableOpacity style={styles.checkbox} onPress={() => toggleHabitCompletion(habit)}>
                                     {isCompleted(habit.completedDates, habit.repeatType, currentDate) ? (
@@ -491,7 +508,7 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
                                 </View>
                                 <View style={styles.infoContainer}>
                                     <Text style={[styles.habitTitle, isCompleted(habit.completedDates, habit.repeatType) && styles.completedText]}>{habit.title}</Text>
-                                    <Text style={styles.streakText}>🔥 {habit.streak} Yıl</Text>
+                                    <Text style={styles.streakText}>🔥 {habit.streak} {getStreakUnit(habit.repeatType)}</Text>
                                 </View>
                                 <TouchableOpacity style={styles.checkbox} onPress={() => toggleHabitCompletion(habit)}>
                                     {isCompleted(habit.completedDates, habit.repeatType) ? (

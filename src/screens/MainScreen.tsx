@@ -23,8 +23,8 @@ export const MainScreen = ({ navigation }: any) => {
                     <Text style={styles.logoText}>SKYQUEST</Text>
                     <Image source={require('../../assets/images/fly1.png')} style={{ width: 24, height: 24 }} resizeMode="contain" />
                 </View>
-                <TouchableOpacity onPress={() => setModalVisible(true)}>
-                    <Ionicons name="add-circle" size={32} color={COLORS.text} />
+                <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.addButton}>
+                    <Ionicons name="add" size={24} color={COLORS.text} />
                 </TouchableOpacity>
             </View>
 
@@ -65,5 +65,14 @@ const styles = StyleSheet.create({
     content: {
         flex: 1,
         paddingHorizontal: 16,
+    },
+    addButton: {
+        width: 36,
+        height: 36,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 8,
+        borderWidth: 1.5,
+        borderColor: COLORS.text,
     },
 });
