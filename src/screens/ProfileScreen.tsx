@@ -131,10 +131,13 @@ export const ProfileScreen = ({ navigation }: any) => {
 
 
 
+            </ScrollView>
+
+            <View style={styles.footer}>
                 <TouchableOpacity style={styles.saveButton}>
                     <Text style={styles.saveButtonText}>Kaydet</Text>
                 </TouchableOpacity>
-            </ScrollView>
+            </View>
 
             <ProfilePhotoSelectionModal
                 visible={modalVisible}
@@ -166,7 +169,12 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         padding: 20,
-        paddingBottom: 40,
+        paddingBottom: 20,
+    },
+    footer: {
+        padding: 20,
+        paddingTop: 10,
+        backgroundColor: COLORS.background, // Ensure it covers content behind it if needed
     },
     avatarSection: {
         alignItems: 'center',
@@ -277,7 +285,6 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         borderRadius: 12,
         alignItems: 'center',
-        marginTop: 20,
     },
     badgesList: {
         marginBottom: 30,

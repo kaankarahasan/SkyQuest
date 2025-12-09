@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     },
     menuItem: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'center', // Ensure vertical alignment of children
         justifyContent: 'space-between',
         backgroundColor: '#333',
         padding: 16,
@@ -111,6 +111,7 @@ const styles = StyleSheet.create({
     menuItemLeft: {
         flexDirection: 'row',
         alignItems: 'center',
+        flex: 1, // Push arrow to right
     },
     menuItemText: {
         color: COLORS.text,

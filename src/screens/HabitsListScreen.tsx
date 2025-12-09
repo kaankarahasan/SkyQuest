@@ -18,30 +18,39 @@ export const HabitsListScreen = ({ navigation }: any) => {
     const [habits, setHabits] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const [user, setUser] = useState(auth.currentUser);
+
     React.useEffect(() => {
-        const unsubscribeAuth = auth.onAuthStateChanged((user) => {
-            if (user) {
-                const q = query(collection(db, 'habits'), where('userId', '==', user.uid));
-                const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
-                    const habitsData: any[] = [];
-                    querySnapshot.forEach((doc) => {
-                        habitsData.push({ id: doc.id, ...doc.data() });
-                    });
-                    setHabits(habitsData);
-                    setLoading(false);
-                }, (error) => {
-                    console.error("HabitsListScreen snapshot error:", error);
-                    setLoading(false);
-                });
-                return () => unsubscribeSnapshot();
-            } else {
+        const unsubscribeAuth = auth.onAuthStateChanged((u) => {
+            setUser(u);
+            if (!u) {
                 setHabits([]);
                 setLoading(false);
             }
         });
-
-        return () => unsubscribeAuth();
+        return unsubscribeAuth;
     }, []);
+
+    React.useEffect(() => {
+        if (!user) return;
+
+        console.log("HabitsListScreen querying for userId:", user.uid);
+        const q = query(collection(db, 'habits'), where('userId', '==', user.uid));
+
+        const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
+            const habitsData: any[] = [];
+            querySnapshot.forEach((doc) => {
+                habitsData.push({ id: doc.id, ...doc.data() });
+            });
+            setHabits(habitsData);
+            setLoading(false);
+        }, (error) => {
+            console.error(`HabitsListScreen permission error for userId: ${user.uid}. Error:`, error);
+            setLoading(false);
+        });
+
+        return () => unsubscribeSnapshot();
+    }, [user]);
 
     const handleEdit = (habit: any) => {
         setSelectedHabit(habit);

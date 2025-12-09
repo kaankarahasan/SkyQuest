@@ -9,21 +9,32 @@ import { FONTS } from '../constants/fonts';
 import { BADGES } from '../constants/gamification';
 
 export const BadgesScreen = ({ navigation }: any) => {
-    const user = auth.currentUser;
     const [earnedBadgeIds, setEarnedBadgeIds] = useState<string[]>([]);
 
+    const [user, setUser] = useState(auth.currentUser);
+
     useEffect(() => {
-        if (user) {
-            const userRef = doc(db, 'users', user.uid);
-            const unsubscribe = onSnapshot(userRef, (doc) => {
-                if (doc.exists()) {
-                    setEarnedBadgeIds(doc.data().earnedBadgeIds || []);
-                }
-            }, (error) => {
-                console.error("BadgesScreen listener error:", error);
-            });
-            return () => unsubscribe();
-        }
+        const unsubscribeAuth = auth.onAuthStateChanged((u) => {
+            setUser(u);
+            if (!u) {
+                setEarnedBadgeIds([]);
+            }
+        });
+        return unsubscribeAuth;
+    }, []);
+
+    useEffect(() => {
+        if (!user) return;
+
+        const userRef = doc(db, 'users', user.uid);
+        const unsubscribe = onSnapshot(userRef, (doc) => {
+            if (doc.exists()) {
+                setEarnedBadgeIds(doc.data().earnedBadgeIds || []);
+            }
+        }, (error) => {
+            console.error("BadgesScreen listener error:", error);
+        });
+        return () => unsubscribe();
     }, [user]);
 
     const renderItem = ({ item }: { item: typeof BADGES[0] }) => {

@@ -10,7 +10,7 @@ import { calculateLevel } from '../utils/gamificationUtils';
 
 const DEFAULT_USER = {
     level: 1,
-    title: 'Acemi (Novice)',
+    title: 'Acemi', // Removed (Novice) - ensuring default is clean
     points: 0,
     earnedBadgeIds: [] as string[],
     photoUrl: null,
@@ -70,12 +70,9 @@ export const UserProfile = () => {
             </View>
             <View style={styles.infoContainer}>
                 <View style={styles.headerRow}>
-                    <Text style={styles.name}>{firstName}</Text>
-                    <View style={styles.statsContainer}>
-                        <Text style={styles.levelInfo}>Level {level}</Text>
-                        <Text style={styles.separator}>•</Text>
-                        <Text style={styles.xpText}>{userData.points || 0} Puan</Text>
-                    </View>
+                    <Text style={[styles.name, { flex: 1, textAlign: 'left' }]}>{firstName}</Text>
+                    <Text style={[styles.levelInfo, { flex: 1, textAlign: 'center', color: COLORS.textSecondary }]}>Level {level}: {userData.title ? userData.title.replace(/\s*\(.*?\)\s*/g, '') : 'Acemi'}</Text>
+                    <Text style={[styles.xpText, { flex: 1, textAlign: 'right' }]}>Puan: {userData.points || 0}</Text>
                 </View>
                 <View style={styles.progressBarBackground}>
                     <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
@@ -108,11 +105,11 @@ const styles = StyleSheet.create({
     badgeOverlay: {
         position: 'absolute',
         bottom: -5,
-        left: -5,
+        right: -5,
         backgroundColor: '#000',
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: COLORS.gold, // Assume Gold color or yellow
+        borderColor: COLORS.gold,
         width: 24,
         height: 24,
         justifyContent: 'center',
@@ -129,10 +126,9 @@ const styles = StyleSheet.create({
     headerRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'flex-start', // Align to left next to name
+        justifyContent: 'space-between',
         marginBottom: 8,
     },
-    // statsRow removed
     statsContainer: {
         flexDirection: 'row',
         alignItems: 'center',

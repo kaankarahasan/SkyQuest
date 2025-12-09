@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         textAlign: 'center',
         flex: 1,
-        fontFamily: FONTS.bold,
+        fontFamily: FONTS.headingBold,
     },
     content: {
         padding: 24,

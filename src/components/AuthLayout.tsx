@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Image, ImageBackground, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ImageBackground, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
@@ -34,16 +34,18 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, showBac
                                 </View>
 
                                 <View style={styles.card}>
-                                    {showBack && (
-                                        <Ionicons
-                                            name="chevron-back"
-                                            size={24}
-                                            color={COLORS.white}
-                                            onPress={onBack}
-                                            style={styles.backIcon}
-                                        />
-                                    )}
-                                    {title && <Text style={styles.screenTitle}>{title}</Text>}
+                                    <View style={styles.cardHeader}>
+                                        {showBack && (
+                                            <TouchableOpacity onPress={onBack} style={styles.backButton}>
+                                                <Ionicons
+                                                    name="chevron-back"
+                                                    size={24}
+                                                    color={COLORS.white}
+                                                />
+                                            </TouchableOpacity>
+                                        )}
+                                        {title && <Text style={[styles.screenTitle, showBack && styles.screenTitleWithBack]}>{title}</Text>}
+                                    </View>
                                     {children}
                                 </View>
                             </ScrollView>
@@ -65,16 +67,18 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, showBac
                                 </View>
 
                                 <View style={styles.card}>
-                                    {showBack && (
-                                        <Ionicons
-                                            name="chevron-back"
-                                            size={24}
-                                            color={COLORS.white}
-                                            onPress={onBack}
-                                            style={styles.backIcon}
-                                        />
-                                    )}
-                                    {title && <Text style={styles.screenTitle}>{title}</Text>}
+                                    <View style={styles.cardHeader}>
+                                        {showBack && (
+                                            <TouchableOpacity onPress={onBack} style={styles.backButton}>
+                                                <Ionicons
+                                                    name="chevron-back"
+                                                    size={24}
+                                                    color={COLORS.white}
+                                                />
+                                            </TouchableOpacity>
+                                        )}
+                                        {title && <Text style={[styles.screenTitle, showBack && styles.screenTitleWithBack]}>{title}</Text>}
+                                    </View>
                                     {children}
                                 </View>
                             </ScrollView>
@@ -144,11 +148,29 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
         color: COLORS.white,
-        marginBottom: 20,
         textAlign: 'center',
         fontFamily: FONTS.bold,
+        flex: 1,
     },
-    backIcon: {
-        marginBottom: 10,
-    }
+    screenTitleWithBack: {
+        // No specific changes needed if we want it centered, but if we want it centered relative to the whole card,
+        // we might need to adjust. However, standard 'center' align with flex 1 works if back button doesn't eat space.
+        // Let's rely on flex 1 and textAlign center.
+        textAlign: 'center',
+        // We might need to compensate for the back button width to make it perfectly centered if it's in a flow.
+        // Or we can just let it be. The user asked for "Center Aligned".
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center', // Center content
+        marginBottom: 20,
+        position: 'relative', // For absolute back button
+    },
+    backButton: {
+        position: 'absolute',
+        left: 0,
+        zIndex: 1,
+    },
+
 });

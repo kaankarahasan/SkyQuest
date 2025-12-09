@@ -18,7 +18,7 @@ export const ForgotPasswordScreen = ({ navigation }: any) => {
 
     return (
         <AuthLayout
-            title="Şifreni mi Unuttun?"
+            title="Şifreni mi unuttun?"
             showBack
             onBack={() => navigation.goBack()}
             backgroundImage={require('../../assets/images/loginbackground.png')}

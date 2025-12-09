@@ -17,44 +17,50 @@ export const HabitList = ({ activeTab }: HabitListProps) => {
     const [habits, setHabits] = React.useState<Habit[]>([]);
     const [loading, setLoading] = React.useState(true);
 
+    const [user, setUser] = React.useState(auth.currentUser);
+
     React.useEffect(() => {
-        const unsubscribeAuth = auth.onAuthStateChanged((user) => {
-            if (user) {
-                const q = query(collection(db, 'habits'), where('userId', '==', user.uid));
-                const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
-                    const habitsData: Habit[] = [];
-                    querySnapshot.forEach((doc) => {
-                        const data = doc.data();
-                        habitsData.push({
-                            id: doc.id,
-                            userId: data.userId,
-                            title: data.title,
-                            description: data.description,
-                            icon: data.icon,
-                            color: data.color,
-                            repeatType: data.repeatType,
-                            selectedDays: data.selectedDays,
-                            createdAt: data.createdAt,
-                            completedDates: data.completedDates || [],
-                            streak: calculateStreak(data.completedDates || [], data.repeatType),
-                            category: data.category,
-                        });
-                    });
-                    setHabits(habitsData);
-                    setLoading(false);
-                }, (error) => {
-                    console.error("HabitList snapshot error:", error);
-                    setLoading(false);
-                });
-                return () => unsubscribeSnapshot();
-            } else {
+        const unsubscribeAuth = auth.onAuthStateChanged((u) => {
+            setUser(u);
+            if (!u) {
                 setHabits([]);
                 setLoading(false);
             }
         });
-
-        return () => unsubscribeAuth();
+        return unsubscribeAuth;
     }, []);
+
+    React.useEffect(() => {
+        if (!user) return;
+
+        const q = query(collection(db, 'habits'), where('userId', '==', user.uid));
+        const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
+            const habitsData: Habit[] = [];
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                habitsData.push({
+                    id: doc.id,
+                    userId: data.userId,
+                    title: data.title,
+                    description: data.description,
+                    icon: data.icon,
+                    color: data.color,
+                    repeatType: data.repeatType,
+                    selectedDays: data.selectedDays,
+                    createdAt: data.createdAt,
+                    completedDates: data.completedDates || [],
+                    streak: calculateStreak(data.completedDates || [], data.repeatType),
+                    category: data.category,
+                });
+            });
+            setHabits(habitsData);
+            setLoading(false);
+        }, (error) => {
+            console.error("HabitList snapshot error:", error);
+            setLoading(false);
+        });
+        return () => unsubscribeSnapshot();
+    }, [user]);
 
     const toggleHabitCompletion = async (habit: Habit) => {
         const today = new Date();
