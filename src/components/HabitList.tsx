@@ -646,10 +646,12 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 8,
         textAlign: 'center',
+        fontFamily: FONTS.bold,
     },
     emptySubText: {
         color: COLORS.textSecondary,
         fontSize: 14,
         textAlign: 'center',
+        fontFamily: FONTS.regular,
     },
 });
