@@ -2,22 +2,47 @@ import { Ionicons } from '@expo/vector-icons';
 import { DrawerContentScrollView } from '@react-navigation/drawer';
 import { signOut } from 'firebase/auth';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
 import { FONTS } from '../constants/fonts';
+import { isAdmin, resetAdminData } from '../utils/adminUtils';
 
 export const CustomDrawerContent = (props: any) => {
     const handleLogout = async () => {
         try {
             await signOut(auth);
             props.navigation.reset({
-                index: 0,
                 routes: [{ name: 'Login' }],
             });
         } catch (error) {
             console.error('Logout error:', error);
         }
+    };
+
+    const handleAdminReset = () => {
+        Alert.alert(
+            "Admin Verilerini Sıfırla",
+            "Tüm puanlar, seviyeler ve alışkanlık geçmişi silinecek. Emin misiniz?",
+            [
+                { text: "İptal", style: "cancel" },
+                {
+                    text: "Sıfırla",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            if (auth.currentUser) {
+                                await resetAdminData(auth.currentUser.uid);
+                                Alert.alert("Başarılı", "Tüm veriler sıfırlandı.");
+                            }
+                        } catch (error) {
+                            console.error("Reset error:", error);
+                            Alert.alert("Hata", "Sıfırlama işlemi başarısız oldu.");
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     return (
@@ -67,6 +92,11 @@ export const CustomDrawerContent = (props: any) => {
             </DrawerContentScrollView>
 
             <View style={styles.footer}>
+                {isAdmin(auth.currentUser) && (
+                    <TouchableOpacity style={styles.resetButton} onPress={handleAdminReset}>
+                        <Text style={styles.resetButtonText}>SIFIRLA (ADMIN)</Text>
+                    </TouchableOpacity>
+                )}
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <Text style={styles.logoutText}>Çıkış Yap</Text>
                 </TouchableOpacity>
@@ -135,6 +165,19 @@ const styles = StyleSheet.create({
     logoutText: {
         color: COLORS.text,
         fontSize: 18,
+        fontWeight: 'bold',
+        fontFamily: FONTS.bold,
+    },
+    resetButton: {
+        backgroundColor: COLORS.error,
+        paddingVertical: 12,
+        borderRadius: 12,
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    resetButtonText: {
+        color: COLORS.white,
+        fontSize: 16,
         fontWeight: 'bold',
         fontFamily: FONTS.bold,
     },
