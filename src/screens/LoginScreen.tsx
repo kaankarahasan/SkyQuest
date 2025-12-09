@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 // Firebase modülleri
 import { signInWithEmailAndPassword } from 'firebase/auth';
@@ -18,6 +19,23 @@ export const LoginScreen = ({ navigation }: any) => {
     const [rememberMe, setRememberMe] = useState(false);
     const [isLoading, setIsLoading] = useState(false); // Yüklenme durumu için
 
+    useEffect(() => {
+        const loadCredentials = async () => {
+            try {
+                const savedEmail = await AsyncStorage.getItem('email');
+                const savedPassword = await AsyncStorage.getItem('password');
+                if (savedEmail && savedPassword) {
+                    setEmail(savedEmail);
+                    setPassword(savedPassword);
+                    setRememberMe(true);
+                }
+            } catch (error) {
+                console.error('Error loading credentials:', error);
+            }
+        };
+        loadCredentials();
+    }, []);
+
     const handleLogin = async () => {
         if (!email || !password) {
             Alert.alert('Hata', 'Lütfen e-posta ve şifrenizi giriniz.');
@@ -34,9 +52,18 @@ export const LoginScreen = ({ navigation }: any) => {
                 password
             );
 
+            // Remember Me Logic
+            if (rememberMe) {
+                await AsyncStorage.setItem('email', email);
+                await AsyncStorage.setItem('password', password);
+            } else {
+                await AsyncStorage.removeItem('email');
+                await AsyncStorage.removeItem('password');
+            }
+
             // Giriş başarılı
             const user = userCredential.user;
-            Alert.alert('Giriş Başarılı', `Hoş geldiniz, ${user.email}`);
+            // Alert.alert('Giriş Başarılı', `Hoş geldiniz, ${user.email}`); // Removed alert for smoother UX
 
             // Başarılı girişten sonra kullanıcıyı ana ekrana yönlendir
             navigation.navigate('MainDrawer');
