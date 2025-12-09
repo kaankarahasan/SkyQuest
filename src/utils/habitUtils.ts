@@ -128,6 +128,7 @@ const decrementDate = (date: Date, frequency: RepeatType) => {
         case 'Monthly':
             date.setMonth(date.getMonth() - 1);
             break;
+        case 'Yearly':
             date.setFullYear(date.getFullYear() - 1);
             break;
     }
