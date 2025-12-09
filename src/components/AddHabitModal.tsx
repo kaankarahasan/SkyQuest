@@ -164,6 +164,7 @@ export const AddHabitModal = ({ visible, onClose, initialData, onDelete }: AddHa
                             placeholderTextColor={COLORS.textSecondary}
                             value={habitName}
                             onChangeText={setHabitName}
+                            autoCapitalize="none"
                         />
 
                         <TextInput
@@ -172,6 +173,7 @@ export const AddHabitModal = ({ visible, onClose, initialData, onDelete }: AddHa
                             placeholderTextColor={COLORS.textSecondary}
                             value={description}
                             onChangeText={setDescription}
+                            autoCapitalize="none"
                         />
 
                         <TouchableOpacity
