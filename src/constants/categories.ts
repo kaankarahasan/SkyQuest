@@ -1,0 +1,17 @@
+export const HABIT_CATEGORIES = [
+    { label: 'Sağlık', value: 'Health' },
+    { label: 'Spor', value: 'Sports' },
+    { label: 'Beslenme', value: 'Nutrition' },
+    { label: 'Eğitim', value: 'Education' },
+    { label: 'Okuma', value: 'Reading' },
+    { label: 'İş / Kariyer', value: 'Work' },
+    { label: 'Finans', value: 'Finance' },
+    { label: 'Kişisel Gelişim', value: 'Personal Development' },
+    { label: 'Uyku', value: 'Sleep' },
+    { label: 'Meditasyon', value: 'Meditation' },
+    { label: 'Sosyal', value: 'Social' },
+    { label: 'Ev İşleri', value: 'Chores' },
+    { label: 'Sanat / Hobi', value: 'Hobbies' },
+    { label: 'Teknoloji', value: 'Technology' },
+    { label: 'Diğer', value: 'Other' },
+];

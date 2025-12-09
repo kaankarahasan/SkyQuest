@@ -1,8 +1,9 @@
 // firebaseConfig.js
 
-import { getAnalytics } from "firebase/analytics";
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import { getAnalytics, isSupported } from "firebase/analytics";
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth'; // Kimlik doğrulama için gerekli
+import { getReactNativePersistence, initializeAuth } from 'firebase/auth'; // Kimlik doğrulama için gerekli
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -21,10 +22,18 @@ const firebaseConfig = {
 
 // Firebase uygulamasını başlat
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+
+let analytics;
+isSupported().then((supported) => {
+    if (supported) {
+        analytics = getAnalytics(app);
+    }
+});
 
 // Kimlik doğrulama servisini al
-export const auth = getAuth(app);
+export const auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+});
 
 // İleride diğer servisleri de buradan dışa aktarabilirsiniz:
 import { getFirestore } from 'firebase/firestore';

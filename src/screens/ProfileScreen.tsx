@@ -1,16 +1,41 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
-import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { auth } from '../../firebaseConfig';
+import { doc, onSnapshot } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { auth, db } from '../../firebaseConfig';
+import { ProfilePhotoSelectionModal } from '../components/ProfilePhotoSelectionModal';
 import { COLORS } from '../constants/colors';
+import { getAvatarSource } from '../utils/avatarUtils';
 
 export const ProfileScreen = ({ navigation }: any) => {
     const user = auth.currentUser;
     const [name, setName] = useState(user?.displayName || '');
     const [email, setEmail] = useState(user?.email || '');
     const [password, setPassword] = useState(''); // Password cannot be retrieved, only reset
+    const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+    const [modalVisible, setModalVisible] = useState(false);
 
+    useEffect(() => {
+        if (user) {
+            const userRef = doc(db, 'users', user.uid);
+            const unsubscribe = onSnapshot(userRef, (doc) => {
+                if (doc.exists()) {
+                    const data = doc.data();
+                    setPhotoUrl(data.photoUrl);
+                    if (data.displayName) setName(data.displayName);
+                }
+            });
+            return () => unsubscribe();
+        }
+    }, [user]);
 
+    const handlePhotoSelect = (photo: any) => {
+        // photo is the ID string from modal, or we can rely on onSnapshot to update the view
+        // The modal handles the firestore update.
+        // We just close the modal.
+        setModalVisible(false);
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -25,10 +50,10 @@ export const ProfileScreen = ({ navigation }: any) => {
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.avatarSection}>
                     <Image
-                        source={{ uri: 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' }}
+                        source={getAvatarSource(photoUrl)}
                         style={styles.avatar}
                     />
-                    <TouchableOpacity style={styles.changePhotoButton}>
+                    <TouchableOpacity style={styles.changePhotoButton} onPress={() => setModalVisible(true)}>
                         <Text style={styles.changePhotoText}>Fotoğrafı Değiştir</Text>
                     </TouchableOpacity>
                 </View>
@@ -83,6 +108,13 @@ export const ProfileScreen = ({ navigation }: any) => {
                     <Text style={styles.saveButtonText}>Kaydet</Text>
                 </TouchableOpacity>
             </ScrollView>
+
+            <ProfilePhotoSelectionModal
+                visible={modalVisible}
+                onClose={() => setModalVisible(false)}
+                currentPhoto={photoUrl}
+                onSelect={handlePhotoSelect}
+            />
         </SafeAreaView>
     );
 };

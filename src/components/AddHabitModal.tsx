@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Alert, Modal, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import EmojiPicker from 'rn-emoji-keyboard';
 import { auth, db } from '../../firebaseConfig';
+import { HABIT_CATEGORIES } from '../constants/categories'; // Import categories
 import { COLORS } from '../constants/colors';
 
 interface AddHabitModalProps {
@@ -24,6 +25,7 @@ export const AddHabitModal = ({ visible, onClose, initialData, onDelete }: AddHa
     const [category, setCategory] = useState('');
     const [selectedEmoji, setSelectedEmoji] = useState('🤩');
     const [emojiPickerVisible, setEmojiPickerVisible] = useState(false);
+    const [categoryModalVisible, setCategoryModalVisible] = useState(false); // State for category modal
 
     const isFormValid = habitName.trim().length > 0 && category.trim().length > 0 && selectedDays.length > 0;
 
@@ -171,13 +173,15 @@ export const AddHabitModal = ({ visible, onClose, initialData, onDelete }: AddHa
                             onChangeText={setDescription}
                         />
 
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Kategori Ekle"
-                            placeholderTextColor={COLORS.textSecondary}
-                            value={category}
-                            onChangeText={setCategory}
-                        />
+                        <TouchableOpacity
+                            style={[styles.input, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}
+                            onPress={() => setCategoryModalVisible(true)}
+                        >
+                            <Text style={category ? styles.inputText : styles.placeholderText}>
+                                {category || "Kategori Seç"}
+                            </Text>
+                            <Ionicons name="chevron-down" size={20} color={COLORS.textSecondary} />
+                        </TouchableOpacity>
 
 
 
@@ -302,6 +306,52 @@ export const AddHabitModal = ({ visible, onClose, initialData, onDelete }: AddHa
                 expandedHeight={500}
                 defaultHeight={500}
             />
+
+            {/* Category Picker Modal */}
+            <Modal
+                visible={categoryModalVisible}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setCategoryModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.header}>
+                            <TouchableOpacity onPress={() => setCategoryModalVisible(false)}>
+                                <Ionicons name="close" size={24} color={COLORS.text} />
+                            </TouchableOpacity>
+                            <Text style={styles.headerTitle}>Kategori Seç</Text>
+                            <View style={{ width: 24 }} />
+                        </View>
+                        <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+                            {HABIT_CATEGORIES.map((item) => (
+                                <TouchableOpacity
+                                    key={item.value}
+                                    style={styles.categoryOption}
+                                    onPress={() => {
+                                        setCategory(item.label);
+                                        setCategoryModalVisible(false);
+                                    }}
+                                >
+                                    <Text style={styles.categoryOptionText}>{item.label}</Text>
+                                    {category === item.label && (
+                                        <Ionicons name="checkmark" size={20} color={COLORS.primary} />
+                                    )}
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                        <TouchableOpacity
+                            style={styles.resetButtonContainer}
+                            onPress={() => {
+                                setCategory('');
+                                setCategoryModalVisible(false);
+                            }}
+                        >
+                            <Text style={styles.resetButtonText}>Seçimi Sıfırla</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </Modal>
     );
 };
@@ -450,6 +500,39 @@ const styles = StyleSheet.create({
     deleteButtonText: {
         color: COLORS.text,
         fontSize: 18,
+        fontWeight: 'bold',
+    },
+    inputText: {
+        color: COLORS.text,
+        fontSize: 16,
+    },
+    placeholderText: {
+        color: COLORS.textSecondary,
+        fontSize: 16,
+    },
+    categoryOption: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 16,
+        paddingHorizontal: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#333',
+    },
+    categoryOptionText: {
+        color: COLORS.text,
+        fontSize: 16,
+    },
+    resetButtonContainer: {
+        marginTop: 10,
+        paddingVertical: 16,
+        alignItems: 'center',
+        borderTopWidth: 1,
+        borderTopColor: '#333',
+    },
+    resetButtonText: {
+        color: COLORS.error,
+        fontSize: 16,
         fontWeight: 'bold',
     },
 });

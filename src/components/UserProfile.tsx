@@ -1,8 +1,9 @@
-import React from 'react';
+import { doc, onSnapshot } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
+import { auth, db } from '../../firebaseConfig';
 import { COLORS } from '../constants/colors';
-
-import { auth } from '../../firebaseConfig';
+import { getAvatarSource } from '../utils/avatarUtils';
 
 // Default user data for new users
 const DEFAULT_USER = {
@@ -15,17 +16,27 @@ const DEFAULT_USER = {
 
 export const UserProfile = () => {
     const user = auth.currentUser;
-    const displayName = user?.displayName || 'Kullanıcı';
+    const [userData, setUserData] = useState<any>(DEFAULT_USER);
 
-    // TODO: Fetch these from Firestore later
-    const userData = DEFAULT_USER;
+    useEffect(() => {
+        if (user) {
+            const userRef = doc(db, 'users', user.uid);
+            const unsubscribe = onSnapshot(userRef, (doc) => {
+                if (doc.exists()) {
+                    setUserData({ ...DEFAULT_USER, ...doc.data() });
+                }
+            });
+            return () => unsubscribe();
+        }
+    }, [user]);
 
+    const displayName = user?.displayName || userData.displayName || 'Kullanıcı';
     const progress = (userData.xp / userData.maxXp) * 100;
 
     return (
         <View style={styles.container}>
             <View style={styles.avatarContainer}>
-                <Image source={{ uri: userData.avatar }} style={styles.avatar} />
+                <Image source={getAvatarSource(userData.photoUrl)} style={styles.avatar} />
             </View>
             <View style={styles.infoContainer}>
                 <View style={styles.headerRow}>
@@ -34,7 +45,7 @@ export const UserProfile = () => {
                     <Text style={styles.xpText}>Puan: {userData.xp}</Text>
                 </View>
                 <View style={styles.progressBarBackground}>
-                    <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
+                    <View style={[styles.progressBarFill, { width: `${progress || 0}%` }]} />
                 </View>
             </View>
         </View>
