@@ -56,7 +56,7 @@ export const UserProfile = () => {
     const currentPointsInLevel = userData.points % 10;
     const progress = (currentPointsInLevel / 10) * 100;
 
-    const { level } = calculateLevel(userData.points || 0);
+    const { level, title } = calculateLevel(userData.points || 0);
 
     return (
         <View style={styles.container}>
@@ -71,7 +71,7 @@ export const UserProfile = () => {
             <View style={styles.infoContainer}>
                 <View style={styles.headerRow}>
                     <Text style={[styles.name, { flex: 1, textAlign: 'left' }]}>{firstName}</Text>
-                    <Text style={[styles.levelInfo, { flex: 1, textAlign: 'center', color: COLORS.textSecondary }]}>Level {level}: {userData.title ? userData.title.replace(/\s*\(.*?\)\s*/g, '') : 'Acemi'}</Text>
+                    <Text style={[styles.levelInfo, { flex: 2, textAlign: 'center', color: COLORS.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>Level {level}: {title}</Text>
                     <Text style={[styles.xpText, { flex: 1, textAlign: 'right' }]}>Puan: {userData.points || 0}</Text>
                 </View>
                 <View style={styles.progressBarBackground}>

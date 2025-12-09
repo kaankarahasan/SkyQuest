@@ -1,18 +1,28 @@
 import { Badge } from '../types/gamification';
 
-// Level titles based on Skyrim leveling
-export const LEVEL_TITLES: { [key: number]: string } = {
-    1: 'Acemi (Novice)',
-    2: 'Çırak (Apprentice)',
-    3: 'Usta (Adept)',
-    4: 'Uzman (Expert)',
-    5: 'Üstad (Master)',
-    6: 'Efsanevi (Legendary)',
-    7: 'Ejderdoğan (Dragonborn)',
-    8: 'Yüksek Hrothgar Üstadı',
-    9: 'Sovngarde Kahramanı',
-    10: 'Tamriel Efsanesi',
-};
+const TIERS = [
+    'Gezgin',      // 1-10
+    'Gözcü',       // 11-20
+    'Yolcu',       // 21-30
+    'Çırak',       // 31-40
+    'Kalfa',       // 41-50
+    'Usta',        // 51-60
+    'Uzman',       // 61-70
+    'Hükümdar',    // 71-80
+    'Efsane',      // 81-90
+    'Ejderdoğan'   // 91-100
+];
+
+const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+
+export const LEVEL_TITLES: { [key: number]: string } = {};
+
+TIERS.forEach((tier, tierIndex) => {
+    ROMAN_NUMERALS.forEach((roman, rankIndex) => {
+        const level = (tierIndex * 10) + (rankIndex + 1);
+        LEVEL_TITLES[level] = `${tier} ${roman}`;
+    });
+});
 
 export const BADGES: Badge[] = [
     {
