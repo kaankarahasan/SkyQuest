@@ -37,8 +37,12 @@ export const LoginScreen = ({ navigation }: any) => {
     }, []);
 
     const handleLogin = async () => {
-        if (!email || !password) {
-            Alert.alert('Hata', 'Lütfen e-posta ve şifrenizi giriniz.');
+        if (!email) {
+            Alert.alert('Hata', 'Lütfen e-posta adresinizi giriniz.');
+            return;
+        }
+        if (!password) {
+            Alert.alert('Hata', 'Lütfen şifrenizi giriniz.');
             return;
         }
 
@@ -73,9 +77,13 @@ export const LoginScreen = ({ navigation }: any) => {
 
             // Firebase hata kodlarına göre daha spesifik mesajlar gösterebiliriz
             if (error.code === 'auth/invalid-email') {
-                errorMessage = 'Geçersiz e-posta adresi.';
-            } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                errorMessage = 'Geçersiz e-posta veya şifre.';
+                errorMessage = 'Geçersiz e-posta adresi formatı.';
+            } else if (error.code === 'auth/user-not-found') {
+                errorMessage = 'Bu e-posta adresi ile kayıtlı kullanıcı bulunamadı.';
+            } else if (error.code === 'auth/wrong-password') {
+                errorMessage = 'Girdiğiniz şifre yanlıştır.';
+            } else if (error.code === 'auth/invalid-credential') {
+                errorMessage = 'E-posta veya şifre hatalı.';
             } else if (error.code === 'auth/too-many-requests') {
                 errorMessage = 'Çok fazla başarısız deneme. Lütfen daha sonra tekrar deneyin.';
             }
