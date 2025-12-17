@@ -1,0 +1,25 @@
+
+> skyquest@1.0.0 test
+> jest src/utils/__tests__/ProfileScreen.test.tsx
+
+FAIL src/utils/__tests__/ProfileScreen.test.tsx
+  ÔùÅ Test suite failed to run
+
+    Cannot find module '../components/ProfilePhotoSelectionModal' from 'src/utils/__tests__/ProfileScreen.test.tsx'
+
+      52 |
+      53 | // 4. Alt Bile┼şenleri Mockla (Testi izole etmek i├ğin)
+    > 54 | jest.mock('../components/ProfilePhotoSelectionModal', () => ({
+         |      ^
+      55 |     ProfilePhotoSelectionModal: () => null // Modal─▒ render etmeyip es ge├ğiyoruz
+      56 | }));
+      57 |
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.mock (src/utils/__tests__/ProfileScreen.test.tsx:54:6)
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        2.128 s
+Ran all test suites matching /src\\utils\\__tests__\\ProfileScreen.test.tsx/i.

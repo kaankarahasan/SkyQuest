@@ -9,6 +9,7 @@ export interface CustomButtonProps {
     variant?: 'primary' | 'secondary';
     loading?: boolean;
     disabled?: boolean; // Hata giderme: disabled prop'unu ekledik
+    testID?: string;
 }
 
 export const CustomButton: React.FC<CustomButtonProps> = ({
@@ -17,6 +18,7 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
     variant = 'primary',
     loading = false,
     disabled = false, // Varsayılan değer false
+    testID,
 }) => {
     const backgroundColor = variant === 'primary' ? COLORS.primary : COLORS.secondary;
 
@@ -25,13 +27,14 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
 
     return (
         <TouchableOpacity
+            testID={testID}
             // Düğme stiline şeffaflık ekleyerek disabled durumunu görselleştiriyoruz
             style={[styles.button, { backgroundColor }, isDisabled && styles.disabledButton]}
             onPress={onPress}
             disabled={isDisabled}
         >
             {loading ? (
-                <ActivityIndicator color={COLORS.white} />
+                <ActivityIndicator testID="loading-indicator" color={COLORS.white} />
             ) : (
                 <Text style={styles.text}>{title}</Text>
             )}

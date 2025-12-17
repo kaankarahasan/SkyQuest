@@ -1,0 +1,297 @@
+
+> skyquest@1.0.0 test
+> jest src/utils/__tests__/ProfileScreen.test.tsx src/utils/__tests__/HabitList.test.tsx src/utils/__tests__/AddHabitModal.test.tsx
+
+FAIL src/utils/__tests__/HabitList.test.tsx
+  ÔùÅ Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     ÔÇó If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     ÔÇó If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     ÔÇó To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     ÔÇó If you need a custom transformation specify a "transform" option in your config.
+     ÔÇó If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    D:\Dosyalar\Mobil\SkyQuest\node_modules\firebase\firestore\dist\esm\index.esm.js:1
+    ({"Object.<anonymous>":function(module,exports,require,__dirname,__filename,jest){export * from '@firebase/firestore';
+                                                                                      ^^^^^^
+
+    SyntaxError: Unexpected token 'export'
+
+      51 |
+      52 | jest.mock('firebase/firestore', () => {
+    > 53 |     const original = jest.requireActual('firebase/firestore');
+         |                           ^
+      54 |     return {
+      55 |         ...original,
+      56 |         collection: jest.fn(),
+
+      at Runtime.createScriptFromCode (node_modules/jest-runtime/build/index.js:1505:14)
+      at requireActual (src/utils/__tests__/HabitList.test.tsx:53:27)
+      at Object.require (src/components/HabitList.tsx:2:1)
+      at Object.require (src/utils/__tests__/HabitList.test.tsx:6:1)
+
+FAIL src/utils/__tests__/AddHabitModal.test.tsx
+  ÔùÅ AddHabitModal (Al─▒┼şkanl─▒k Ekle/D├╝zenle) Testleri ÔÇ║ D├╝zenleme Modu (Edit Mode) Testi
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: Anything, ObjectContaining {"title": "Yeni Ba┼şl─▒k"}
+    Received: undefined, {"category": "Sanat", "color": null, "description": "Eski a├ğ─▒klama", "focusHabitEnabled": false, "icon": "­şñ®", "reminderEnabled": false, "repeatType": "Daily", "selectedDays": [1], "title": "Yeni Ba┼şl─▒k", "userId": "test-user-123"}
+
+    Number of calls: 1
+
+      136 |
+      137 |         // 4. Kontrol: updateDoc ├ğa─şr─▒ld─▒ m─▒?
+    > 138 |         await waitFor(() => {
+          |                      ^
+      139 |             expect(updateDoc).toHaveBeenCalledWith(
+      140 |                 expect.anything(), // doc referans─▒
+      141 |                 expect.objectContaining({
+
+      at Object.<anonymous> (src/utils/__tests__/AddHabitModal.test.tsx:138:22)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+FAIL src/utils/__tests__/ProfileScreen.test.tsx (5.352 s)
+  ÔùÅ Profil Ekran─▒ (ProfileScreen) Testleri ÔÇ║ Mevcut kullan─▒c─▒ bilgileri ekrana gelmeli
+
+    Unable to find an element with displayValue: Mevcut ─░sim
+
+    <RNCSafeAreaView>
+      <View>
+        <View
+          accessible={true}
+        >
+          <View />
+        </View>
+        <Text>
+          PROF─░L
+        </Text>
+        <View />
+      </View>
+      <RCTScrollView>
+        <View>
+          <View>
+            <Image />
+            <View
+              accessible={true}
+            >
+              <Text>
+                Foto─şraf─▒ De─şi┼ştir
+              </Text>
+            </View>
+          </View>
+          <View>
+            <Text>
+              Ad Soyad
+            </Text>
+            <TextInput
+              placeholder="Ad Soyad"
+              value=""
+            />
+            <Text>
+              E-Posta
+            </Text>
+            <TextInput
+              placeholder="E-Posta"
+              value=""
+            />
+            <Text>
+              ┼Şifre
+            </Text>
+            <TextInput
+              placeholder="┼Şifre"
+              value=""
+            />
+          </View>
+          <Text>
+            ROZETLER
+          </Text>
+          <View>
+            <View>
+              <View />
+            </View>
+            <View>
+              <Text>
+                Hen├╝z hi├ğ rozet kazanmad─▒n
+              </Text>
+              <Text>
+                Al─▒┼şkanl─▒klar─▒n─▒ tamamlayarak ve seviye atlayarak rozetler kazanabilirsin.
+              </Text>
+            </View>
+          </View>
+        </View>
+      </RCTScrollView>
+      <View>
+        <View
+          accessibilityState={
+            {
+              "disabled": false,
+            }
+          }
+          accessible={true}
+        >
+          <Text>
+            Kaydet
+          </Text>
+        </View>
+      </View>
+    </RNCSafeAreaView>
+
+      71 |
+      72 |         // Inputlarda mevcut de─şerler yazmal─▒
+    > 73 |         await waitFor(() => {
+         |                      ^
+      74 |             expect(getByDisplayValue('Mevcut ─░sim')).toBeTruthy();
+      75 |             expect(getByDisplayValue('mevcut@mail.com')).toBeTruthy();
+      76 |         });
+
+      at Object.<anonymous> (src/utils/__tests__/ProfileScreen.test.tsx:73:22)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+  ÔùÅ Profil Ekran─▒ (ProfileScreen) Testleri ÔÇ║ ─░sim de─şi┼şikli─şi yap─▒p kaydedince updateProfile ├ğa─şr─▒lmal─▒
+
+    Unable to find an element with displayValue: Mevcut ─░sim
+
+    <RNCSafeAreaView>
+      <View>
+        <View
+          accessible={true}
+        >
+          <View />
+        </View>
+        <Text>
+          PROF─░L
+        </Text>
+        <View />
+      </View>
+      <RCTScrollView>
+        <View>
+          <View>
+            <Image />
+            <View
+              accessible={true}
+            >
+              <Text>
+                Foto─şraf─▒ De─şi┼ştir
+              </Text>
+            </View>
+          </View>
+          <View>
+            <Text>
+              Ad Soyad
+            </Text>
+            <TextInput
+              placeholder="Ad Soyad"
+              value=""
+            />
+            <Text>
+              E-Posta
+            </Text>
+            <TextInput
+              placeholder="E-Posta"
+              value=""
+            />
+            <Text>
+              ┼Şifre
+            </Text>
+            <TextInput
+              placeholder="┼Şifre"
+              value=""
+            />
+          </View>
+          <Text>
+            ROZETLER
+          </Text>
+          <View>
+            <View>
+              <View />
+            </View>
+            <View>
+              <Text>
+                Hen├╝z hi├ğ rozet kazanmad─▒n
+              </Text>
+              <Text>
+                Al─▒┼şkanl─▒klar─▒n─▒ tamamlayarak ve seviye atlayarak rozetler kazanabilirsin.
+              </Text>
+            </View>
+          </View>
+        </View>
+      </RCTScrollView>
+      <View>
+        <View
+          accessibilityState={
+            {
+              "disabled": false,
+            }
+          }
+          accessible={true}
+        >
+          <Text>
+            Kaydet
+          </Text>
+        </View>
+      </View>
+    </RNCSafeAreaView>
+
+      84 |
+      85 |         // 1. ─░smi de─şi┼ştir
+    > 86 |         const nameInput = getByDisplayValue('Mevcut ─░sim');
+         |                           ^
+      87 |         fireEvent.changeText(nameInput, 'Yeni ─░sim');
+      88 |
+      89 |         // 2. Kaydet butonuna bas
+
+      at Object.getByDisplayValue (src/utils/__tests__/ProfileScreen.test.tsx:86:27)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+  ÔùÅ Profil Ekran─▒ (ProfileScreen) Testleri ÔÇ║ ┼Şifre girilirse updatePassword ├ğa─şr─▒lmal─▒
+
+    expect(jest.fn()).toHaveBeenCalled()
+
+    Expected number of calls: >= 1
+    Received number of calls:    0
+
+      126 |         fireEvent.press(getByText('Kaydet'));
+      127 |
+    > 128 |         await waitFor(() => expect(Alert.alert).toHaveBeenCalled());
+          |                      ^
+      129 |         const buttons = (Alert.alert as jest.Mock).mock.calls[0][2];
+      130 |         await buttons[1].onPress(); // Evet'e bas
+      131 |
+
+      at Object.<anonymous> (src/utils/__tests__/ProfileScreen.test.tsx:128:22)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+Test Suites: 3 failed, 3 total
+Tests:       4 failed, 2 passed, 6 total
+Snapshots:   0 total
+Time:        7.254 s
+Ran all test suites matching /src\\utils\\__tests__\\ProfileScreen.test.tsx|src\\utils\\__tests__\\HabitList.test.tsx|src\\utils\\__tests__\\AddHabitModal.test.tsx/i.

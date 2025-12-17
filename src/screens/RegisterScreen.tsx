@@ -96,6 +96,7 @@ export const RegisterScreen = ({ navigation }: any) => {
             </View>
 
             <CustomButton
+                testID="register-button"
                 title={isLoading ? "Kaydediliyor..." : "Kayıt Ol"}
                 onPress={handleRegister}
                 variant="secondary"
